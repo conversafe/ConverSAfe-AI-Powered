@@ -17,9 +17,6 @@ export const registerValidation = [
     .isLength({ min: 6 }).withMessage('Password must have at least 6 characters'),
   body('name')
     .notEmpty().withMessage('Name is required'),
-  body('age')
-    .notEmpty().withMessage('Age is required')
-    .isInt({ min: 0 }).withMessage('Age must be a positive integer'),
   body('role')
     .notEmpty().withMessage('Role is required')
     .isIn(USER_ROLES).withMessage(`Role must be one of: ${USER_ROLES.join(', ')}`)
