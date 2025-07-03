@@ -12,6 +12,7 @@ import authRouter from "./src/routes/authRoutes.js";
 import userRouter from "./src/routes/userRoutes.js";
 import chatRoomRouter from "./src/routes/chatRoomRoutes.js";
 import registerChatSocket from "./src/sockets/chatSocket.js";
+import wsAuthMiddleware from "./src/middlewares/wsAuthMiddleware.js";
 
 dotenv.config();
 
@@ -64,9 +65,10 @@ app.use("/auth", authRouter);
 app.use("/user", userRouter);
 app.use("/chatrooms", chatRoomRouter);
 
+io.use(wsAuthMiddleware);
 // WebSocket Connection
 io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
+  console.log(`User authenticated: ${socket.user.name}`);
   registerChatSocket(io, socket);
 });
 
