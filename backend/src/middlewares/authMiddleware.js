@@ -3,7 +3,7 @@ import { HTTP } from "../utils/httpConstants.js";
 
 const authMiddleware = (req, res, next) => {
   passport.authenticate("jwt", { session: false }, (err, user, info) => {
-    console.log(err);
+    console.error(err);
     
     if (err) return next(err);
     if (!user) {

@@ -2,15 +2,16 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import passport from "passport";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import registerChatSocket from "./src/sockets/chatSocket.js";
 import { connectDB } from "./src/config/db.config.js";
 import { errorMiddleware } from "./src/middlewares/errorMiddleware.js";
-import authRouter from "./src/routes/authRoutes.js";
-import passport from "passport";
 import { initializePassport } from "./src/config/passport.config.js";
+import authRouter from "./src/routes/authRoutes.js";
 import userRouter from "./src/routes/userRoutes.js";
+import chatRoomRouter from "./src/routes/chatRoomRoutes.js";
+import registerChatSocket from "./src/sockets/chatSocket.js";
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ app.use(passport.initialize());
 // Routes
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
+app.use("/chatrooms", chatRoomRouter);
 
 // WebSocket Connection
 io.on("connection", (socket) => {
