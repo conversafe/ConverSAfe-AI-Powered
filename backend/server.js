@@ -1,25 +1,25 @@
-import express from "express";
 import cors from "cors";
-import helmet from "helmet";
 import dotenv from "dotenv";
-import passport from "passport";
+import express from "express";
+import helmet from "helmet";
 import { createServer } from "http";
+import passport from "passport";
 import { Server } from "socket.io";
 import { connectDB } from "./src/config/db.config.js";
-import { errorMiddleware } from "./src/middlewares/errorMiddleware.js";
 import { initializePassport } from "./src/config/passport.config.js";
-import authRouter from "./src/routes/authRoutes.js";
-import userRouter from "./src/routes/userRoutes.js";
-import chatRoomRouter from "./src/routes/chatRoomRoutes.js";
-import registerChatSocket from "./src/sockets/chatSocket.js";
+import { errorMiddleware } from "./src/middlewares/errorMiddleware.js";
 import wsAuthMiddleware from "./src/middlewares/wsAuthMiddleware.js";
+import authRouter from "./src/routes/authRoutes.js";
+import chatRoomRouter from "./src/routes/chatRoomRoutes.js";
+import userRouter from "./src/routes/userRoutes.js";
+import registerChatSocket from "./src/sockets/chatSocket.js";
 
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "http://localhost";
 const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
-  ? process.env.CORS_ALLOWED_ORIGINS.split(",").map((origin) => origin.trim())
+  ? process.env.CORS_ALLOWED_ORIGINS.split(",").map(origin => origin.trim())
   : ["http://localhost:3000"];
 
 const app = express();
@@ -35,7 +35,7 @@ const io = new Server(httpServer, {
         callback(new Error("Socket.IO CORS: Origin not allowed"));
       }
     },
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
 
@@ -51,7 +51,7 @@ app.use(
         callback(new Error("CORS: Origin not allowed"));
       }
     },
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
 app.use(helmet());
@@ -67,7 +67,7 @@ app.use("/chatrooms", chatRoomRouter);
 
 io.use(wsAuthMiddleware);
 // WebSocket Connection
-io.on("connection", (socket) => {
+io.on("connection", socket => {
   console.log(`User authenticated: ${socket.user.name}`);
   registerChatSocket(io, socket);
 });

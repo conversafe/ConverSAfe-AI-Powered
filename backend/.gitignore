@@ -142,4 +142,7 @@ vscode/
 # SvelteKit build / generate output
 .svelte-kit
 
+### macOS ###
+.DS_Store
+
 # End of https://www.toptal.com/developers/gitignore/api/node
