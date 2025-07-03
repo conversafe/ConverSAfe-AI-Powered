@@ -66,3 +66,14 @@ export const joinChatRoom = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const getUserChatRooms = async (req, res, next) => {
+  try {
+    const rooms = await chatRoomServices.getRoomsByUser(req.user._id);
+    res.status(200).json(rooms);
+  } catch (err) {
+    const error = new Error(`Error fetching user chatrooms: ${err.message}`);
+    error.statusCode = HTTP.STATUS.INTERNAL_ERROR;
+    return next(error);
+  }
+};

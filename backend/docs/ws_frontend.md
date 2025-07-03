@@ -52,19 +52,9 @@ function joinRoom(roomId) {
 }
 ```
 
-## ✅ 4. Recibir Historial del chat
-
-```js
-socket.on("chatHistory", (msgs) => {
-  console.log("🕘 Historial:", msgs);
-  // Setealo en el estado inicial de tus mensajes
-  setMessages(msgs); // Si usás useState
-});
-```
-
 ---
 
-## ✅ 5. Escuchar nuevos mensajes
+## ✅ 4. Escuchar nuevos mensajes
 
 ```js
 socket.on("newMessage", (msg) => {
@@ -75,7 +65,7 @@ socket.on("newMessage", (msg) => {
 
 ---
 
-## ✅ 6. Enviar mensajes
+## ✅ 5. Enviar mensajes
 
 ```js
 function sendMessage(roomId, content) {
@@ -88,7 +78,7 @@ function sendMessage(roomId, content) {
 
 ---
 
-## ✅ 7. Manejar errores desde el backend
+## ✅ 6. Manejar errores desde el backend
 
 ```js
 socket.on("chatError", (msg) => {
