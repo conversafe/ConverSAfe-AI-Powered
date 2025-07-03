@@ -15,12 +15,9 @@ export const initializePassport = () => {
       },
       async (jwt_payload, done) => {
         try {
-          console.log(process.env.JWT_SECRET);
-          console.log(jwt_payload);
-          
           const user = await User.findById(jwt_payload._id);
           if (user) {
-            return done(null, user);
+            return done(null, user.toObject());
           } else {
             return done(null, false);
           }

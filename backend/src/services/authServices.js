@@ -34,7 +34,7 @@ export const register = async (data) => {
   const exists = await User.findOne({ email });
   if (exists) {
     const error = new Error("User already exists");
-    error.statusCode = HTTP.STATUS.BAD_CREDENTIALS;
+    error.statusCode = HTTP.STATUS.BAD_REQUEST;
     throw error;
   }
 

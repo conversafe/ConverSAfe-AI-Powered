@@ -3,9 +3,10 @@ import { HTTP } from "../utils/httpConstants.js";
 
 const authMiddleware = (req, res, next) => {
   passport.authenticate("jwt", { session: false }, (err, user, info) => {
-    console.error(err);
-    
-    if (err) return next(err);
+    if (err) {
+      console.error(err);
+      return next(err);
+    }
     if (!user) {
       const error = new Error("Missing or invalid token");
       error.statusCode = HTTP.STATUS.UNAUTHORIZED;
