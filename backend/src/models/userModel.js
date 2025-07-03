@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
 
+export const USER_ROLES = ["admin", "user"];
+
 const userSchema = new Schema(
   {
     email: {
@@ -13,13 +15,18 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    firstName: {
+    name: {
       type: String,
       required: true,
     },
-    lastName: {
+    age: {
+      type: Number,
+      required: true,
+    },
+    role: {
       type: String,
       required: true,
+      enum: USER_ROLES,
     },
   },
   { timestamps: true }
