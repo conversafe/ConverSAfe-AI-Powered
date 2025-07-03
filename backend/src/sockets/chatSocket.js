@@ -1,3 +1,5 @@
+const HISTORY_N_MSG = 30
+
 export default async function registerChatSocket(io, socket) {
   socket.on("joinRoom", async ({ roomId }) => {
     const room = await ChatRoom.findById(roomId);
@@ -8,6 +10,14 @@ export default async function registerChatSocket(io, socket) {
 
     socket.join(roomId);
     console.log(`${socket.user.name} se unió a ${roomId}`);
+
+    const messages = await Message.find({ chatRoom: roomId })
+      .sort({ createdAt: -1 }) 
+      .limit(HISTORY_N_MSG)
+      .populate("sender", "name email")
+      .lean();
+
+    socket.emit("chatHistory", messages.reverse());
   });
 
   socket.on("sendMessage", async ({ roomId, content }) => {
