@@ -21,6 +21,7 @@ router.get("/member", authMiddleware, getUserChatRooms);
 router.get("/:id", authMiddleware, viewChatRoom);
 
 // Metricas
-router.get("/:id/metrics", authMiddleware, roleMiddleware("admin"), roomMetrics);
+// router.get("/:id/metrics", authMiddleware, roleMiddleware("admin"), roomMetrics);
+router.get("/:id/metrics", authMiddleware, roomMetrics);
 
 export default router;
