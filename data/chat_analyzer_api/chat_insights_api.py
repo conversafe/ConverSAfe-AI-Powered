@@ -34,12 +34,13 @@ else:
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-
 # Modelos de entrada en snake_case
 class Mensaje(BaseModel):
     usuario: str
     texto: str
     marca_de_tiempo: str
+    roomId: str
+    email: str
 
 class Conversacion(BaseModel):
     mensajes: List[Mensaje]
@@ -54,10 +55,9 @@ def analizar_conversacion(conversacion: Conversacion):
         # Preparar conversación en formato texto
         mensajes_json = [mensaje.dict() for mensaje in conversacion.mensajes]
 
-        conversation_text = ""
+        data_de_mensaje = ""
         for msg in mensajes_json:
-            conversation_text += f"[{msg['usuario']}]: {msg['texto']} ({msg['marca_de_tiempo']})\n"
-
+            data_de_mensaje += f"[{msg['usuario']} - {msg['email']} - Room: {msg['roomId']}]: {msg['texto']} ({msg['marca_de_tiempo']})\n"
 
         prompt = f"""
         Eres un asistente de IA que analiza la comunicación en equipos de desarrollo.
@@ -114,7 +114,9 @@ def analizar_conversacion(conversacion: Conversacion):
                     "eficacia_comunicacion": "string",
                     "comentario_eficacia": "string",
                     "enfoque_conversacion": "string",
-                    "comentario_enfoque": "string"
+                    "comentario_enfoque": "string",
+                    "roomId": "string",
+                    "email": "string"
                 }}
             ],
             "equipo": {{
@@ -152,7 +154,7 @@ def analizar_conversacion(conversacion: Conversacion):
         ```
 
         Conversación a analizar:
-        {conversation_text}
+        {data_de_mensaje}
         """
 
         # Llamada a Gemini
@@ -165,7 +167,6 @@ def analizar_conversacion(conversacion: Conversacion):
             end_idx = response_text.rfind("```")
             json_str = response_text[start_idx:end_idx].strip()
         else:
-            # Si no hay delimitadores, la respuesta entera es el JSON
             json_str = response_text
 
         # Validación básica de formato JSON
@@ -175,12 +176,12 @@ def analizar_conversacion(conversacion: Conversacion):
             raise HTTPException(status_code=500, detail="El modelo no devolvió un JSON válido.")
 
         # NOTA PARA BACKEND:
-        #    Guardar el resultado en base de datos.
-        #     conexión:
-        #       - Atributos de Usuarios y equipo
-        #       - Conceptos para la lista del dashboard
-        #       - Conceptos para el feedback
-        #    Los datos Importantes están escritos en español
+        # Guardar el resultado en base de datos.
+        # Conexión:
+        # - Atributos de Usuarios y equipo
+        # - Conceptos para la lista del dashboard
+        # - Conceptos para el feedback
+        # Los datos Importantes están escritos en español
 
         return resultado_analisis
 
