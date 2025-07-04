@@ -14,12 +14,25 @@ import json
 from typing import List
 import os
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 # Cargar variables de entorno desde .env
 load_dotenv()
 
 # Inicialización de FastAPI
 app = FastAPI()
+
+# Cargar y parsear los orígenes desde env
+raw_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Configuración segura de la API de Gemini
 api_key = os.getenv("GEMINI_API_KEY")
@@ -32,7 +45,7 @@ else:
     print("✅ GEMINI_API_KEY cargada correctamente")
 
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 
 # Modelos de entrada en snake_case
@@ -41,12 +54,15 @@ class Mensaje(BaseModel):
     texto: str
     marca_de_tiempo: str
 
+
 class Conversacion(BaseModel):
     mensajes: List[Mensaje]
+
 
 @app.get("/")
 def read_root():
     return {"status": "Chat Analysis Service is running"}
+
 
 @app.post("/analizar_conversacion")
 def analizar_conversacion(conversacion: Conversacion):
@@ -56,8 +72,9 @@ def analizar_conversacion(conversacion: Conversacion):
 
         conversation_text = ""
         for msg in mensajes_json:
-            conversation_text += f"[{msg['usuario']}]: {msg['texto']} ({msg['marca_de_tiempo']})\n"
-
+            conversation_text += (
+                f"[{msg['usuario']}]: {msg['texto']} ({msg['marca_de_tiempo']})\n"
+            )
 
         prompt = f"""
         Eres un asistente de IA que analiza la comunicación en equipos de desarrollo.
@@ -172,7 +189,9 @@ def analizar_conversacion(conversacion: Conversacion):
         try:
             resultado_analisis = json.loads(json_str)
         except json.JSONDecodeError:
-            raise HTTPException(status_code=500, detail="El modelo no devolvió un JSON válido.")
+            raise HTTPException(
+                status_code=500, detail="El modelo no devolvió un JSON válido."
+            )
 
         # NOTA PARA BACKEND:
         #    Guardar el resultado en base de datos.
@@ -185,4 +204,6 @@ def analizar_conversacion(conversacion: Conversacion):
         return resultado_analisis
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al procesar la conversación: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error al procesar la conversación: {str(e)}"
+        )
