@@ -13,6 +13,7 @@ export const userProfile = async (req, res, next) => {
 export const deleteUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
+
     const result = await userServices.deleteUser(userId, req.user);
     return res.status(HTTP.STATUS.OK).json(result);
   } catch (err) {

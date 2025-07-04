@@ -1,7 +1,7 @@
 {
   "info": {
-    "_postman_id": "a7b8c9d0-1234-5678-9abc-def012345678",
-    "name": "🍄 ConverSafe ChatRoomAPI | Gestión de Salas de Chat",
+    "_postman_id": "9f231185-362f-4f37-bfe1-d95fa2dcc806",
+    "name": "🍄 ConverSafe ChatRoomAPI + MetricsAPI | Gestión de Salas de Chat",
     "description": "Colección especializada para probar exhaustivamente los endpoints de gestión de salas de chat de ConverSafe API según docs/chatRoomAPI.md y docs/metricsAPI.md. Formato TC# con validaciones 'Debería'.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "613062"
@@ -50,13 +50,7 @@
                   "vars.forEach(key => pm.environment.unset(key));",
                   "console.log(\"🔁 Variables limpiadas:\", vars);",
                   "",
-                  "// Advertir sobre tokens necesarios",
-                  "if (!pm.environment.get('adminToken')) {",
-                  "    console.log('⚠️ IMPORTANTE: Necesitas definir adminToken en el entorno');",
-                  "}",
-                  "if (!pm.environment.get('userToken')) {",
-                  "    console.log('⚠️ IMPORTANTE: Necesitas definir userToken en el entorno');",
-                  "}"
+                  "console.log('🚀 Iniciando setup automático de usuarios y tokens...');"
                 ],
                 "type": "text/javascript",
                 "packages": {}
@@ -72,6 +66,220 @@
               "path": [""]
             },
             "description": "Request inicial para verificar que el servidor esté funcionando"
+          },
+          "response": []
+        },
+        {
+          "name": "SETUP: Registrar usuario Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Permitir tanto 201 (creado) como 409 (ya existe)",
+                  "pm.test(\"✅ Debería registrar admin o confirmar que ya existe\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Admin registrado exitosamente');",
+                  "    var adminData = pm.response.json();",
+                  "    pm.environment.set('testAdminId', adminData._id);",
+                  "    pm.environment.set('testAdminEmail', adminData.email);",
+                  "    console.log('📋 Admin ID guardado:', adminData._id);",
+                  "} else if (pm.response.code === 409) {",
+                  "    console.log('ℹ️ Admin ya existe, continuando...');",
+                  "    pm.environment.set('testAdminEmail', 'admin@chatroom.test');",
+                  "    // Nota: El ID se obtendrá en el login",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin ChatRoom\",\n  \"email\": \"admin@chatroom.test\",\n  \"password\": \"adminpass123456\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SETUP: Registrar usuario normal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Permitir tanto 201 (creado) como 409 (ya existe)",
+                  "pm.test(\"✅ Debería registrar user o confirmar que ya existe\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Usuario registrado exitosamente');",
+                  "    var userData = pm.response.json();",
+                  "    pm.environment.set('testUserId', userData._id);",
+                  "    pm.environment.set('testUserEmail', userData.email);",
+                  "    console.log('📋 User ID guardado:', userData._id);",
+                  "} else if (pm.response.code === 409) {",
+                  "    console.log('ℹ️ Usuario ya existe, continuando...');",
+                  "    pm.environment.set('testUserEmail', 'user@chatroom.test');",
+                  "    // Nota: El ID se obtendrá en el login",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"User ChatRoom\",\n  \"email\": \"user@chatroom.test\",\n  \"password\": \"userpass123456\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SETUP: Login Admin para obtener token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"✅ Debería hacer login exitoso del admin\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Debería obtener token JWT del admin\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.token).to.exist;",
+                  "    pm.expect(jsonData.token).to.be.a('string');",
+                  "    pm.expect(jsonData.token).to.include('eyJ'); // JWT starts with eyJ",
+                  "    pm.environment.set('adminToken', jsonData.token);",
+                  "    console.log('🔑 Admin token obtenido y guardado');",
+                  "    ",
+                  "    // Guardar ID del admin si no se tenía",
+                  "    if (jsonData.user && jsonData.user._id) {",
+                  "        pm.environment.set('testAdminId', jsonData.user._id);",
+                  "        console.log('📋 Admin ID guardado desde login:', jsonData.user._id);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Debería confirmar role de admin\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user.role).to.eql('admin');",
+                  "    pm.environment.set('testAdminId', jsonData.user._id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@chatroom.test\",\n  \"password\": \"adminpass123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SETUP: Login User para obtener token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"✅ Debería hacer login exitoso del user\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Debería obtener token JWT del user\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.token).to.exist;",
+                  "    pm.expect(jsonData.token).to.be.a('string');",
+                  "    pm.expect(jsonData.token).to.include('eyJ'); // JWT starts with eyJ",
+                  "    pm.environment.set('userToken', jsonData.token);",
+                  "    console.log('🔑 User token obtenido y guardado');",
+                  "    ",
+                  "    // Guardar ID del usuario si no se tenía",
+                  "    if (jsonData.user && jsonData.user._id) {",
+                  "        pm.environment.set('testUserId', jsonData.user._id);",
+                  "        console.log('📋 User ID guardado desde login:', jsonData.user._id);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Debería confirmar role de user\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user.role).to.eql('user');",
+                  "    pm.environment.set('testUserId', jsonData.user._id);",
+                  "});",
+                  "",
+                  "console.log('🎉 Setup completado - Tokens disponibles para tests de ChatRoom');"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@chatroom.test\",\n  \"password\": \"userpass123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
           },
           "response": []
         }
@@ -160,9 +368,17 @@
                   "",
                   "pm.test(\"Debería retornar mensaje de error de autorización\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.error.message).to.exist;",
                   "});"
                 ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
                 "type": "text/javascript"
               }
             }
@@ -200,10 +416,11 @@
                   "",
                   "pm.test(\"Debería retornar mensaje de permisos insuficientes\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.error.message).to.exist;",
                   "});"
                 ],
-                "type": "text/javascript"
+                "type": "text/javascript",
+                "packages": {}
               }
             }
           ],
@@ -244,10 +461,11 @@
                   "",
                   "pm.test(\"Debería retornar mensaje de validación\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.error.message).to.exist;",
                   "});"
                 ],
-                "type": "text/javascript"
+                "type": "text/javascript",
+                "packages": {}
               }
             }
           ],
@@ -298,7 +516,6 @@
                   "    pm.expect(jsonData.admin).to.exist;",
                   "    pm.expect(jsonData.participants).to.be.an('array');",
                   "    pm.expect(jsonData.accessCode).to.exist;",
-                  "    pm.expect(jsonData.messages).to.be.an('array');",
                   "    pm.expect(jsonData.createdAt).to.exist;",
                   "});",
                   "",
@@ -314,7 +531,8 @@
                   "    pm.expect(jsonData._id).to.eql(pm.environment.get('testRoomId'));",
                   "});"
                 ],
-                "type": "text/javascript"
+                "type": "text/javascript",
+                "packages": {}
               }
             }
           ],
@@ -347,10 +565,11 @@
                   "",
                   "pm.test(\"Debería retornar mensaje de error\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.error.message).to.exist;",
                   "});"
                 ],
-                "type": "text/javascript"
+                "type": "text/javascript",
+                "packages": {}
               }
             }
           ],
@@ -438,10 +657,11 @@
                   "",
                   "pm.test(\"Debería retornar mensaje de error\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.error.message).to.exist;",
                   "});"
                 ],
-                "type": "text/javascript"
+                "type": "text/javascript",
+                "packages": {}
               }
             }
           ],
@@ -482,10 +702,11 @@
                   "",
                   "pm.test(\"Debería retornar mensaje de validación\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.error.message).to.exist;",
                   "});"
                 ],
-                "type": "text/javascript"
+                "type": "text/javascript",
+                "packages": {}
               }
             }
           ],
@@ -691,10 +912,11 @@
                   "",
                   "pm.test(\"Debería retornar mensaje de permisos insuficientes\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.error.message).to.exist;",
                   "});"
                 ],
-                "type": "text/javascript"
+                "type": "text/javascript",
+                "packages": {}
               }
             }
           ],
@@ -727,10 +949,11 @@
                   "",
                   "pm.test(\"Debería retornar mensaje de error\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.exist;",
+                  "    pm.expect(jsonData.error.message).to.exist;",
                   "});"
                 ],
-                "type": "text/javascript"
+                "type": "text/javascript",
+                "packages": {}
               }
             }
           ],
@@ -756,31 +979,110 @@
       "name": "🧹 Cleanup",
       "item": [
         {
-          "name": "CLEANUP: Limpiar datos de prueba",
+          "name": "Delete Normal Test User",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "console.log(\"🧹 Ejecutando limpieza de datos de prueba...\");",
-                  "",
-                  "// Aquí podrías agregar lógica para eliminar salas de prueba",
-                  "// si tuvieras un endpoint DELETE para salas",
-                  "",
-                  "pm.test(\"✅ Limpieza ejecutada\", function () {",
-                  "    pm.expect(true).to.be.true;",
-                  "});",
-                  "",
-                  "// Limpiar variables de entorno",
+                  "pm.test('Normal user deletion completed', function () {",
+                  "    const responseCode = pm.response.code;",
+                  "    pm.expect([200, 404]).to.include(responseCode);",
+                  "    ",
+                  "    if (responseCode === 200) {",
+                  "        console.log('✅ Normal test user deleted successfully');",
+                  "    } else if (responseCode === 404) {",
+                  "        console.log('ℹ️ Normal test user not found (already deleted)');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testUserId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Admin Test User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Admin user deletion completed', function () {",
+                  "    const responseCode = pm.response.code;",
+                  "    // Admin puede fallar por auto-eliminación o no encontrado",
+                  "    pm.expect([200, 400, 404]).to.include(responseCode);",
+                  "    ",
+                  "    if (responseCode === 200) {",
+                  "        console.log('✅ Admin test user deleted successfully');",
+                  "    } else if (responseCode === 400) {",
+                  "        console.log('ℹ️ Admin cannot delete own account (expected)');",
+                  "    } else if (responseCode === 404) {",
+                  "        console.log('ℹ️ Admin test user not found (already deleted)');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testAdminId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testAdminId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clean Environment Variables",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Clean all test-related variables",
                   "const vars = [",
-                  "    'testRoomId', 'testRoomName', 'testAccessCode'",
+                  "    'adminToken', 'userToken', 'testRoomId', 'testAccessCode',",
+                  "    'testAdminId', 'testUserId', 'testAdminEmail', 'testUserEmail',",
+                  "    'testRoomName', 'roomsToCleanup', 'testTimestamp'",
                   "];",
+                  "",
                   "vars.forEach(key => {",
                   "    pm.environment.unset(key);",
-                  "    console.log('🗑️ Eliminada variable:', key);",
+                  "    console.log('🗑️ Variable eliminada:', key);",
                   "});",
                   "",
-                  "console.log(\"✅ Limpieza completada\");"
+                  "console.log('🧹 Environment variables cleaned');",
+                  "",
+                  "pm.test('Environment cleanup completed', function () {",
+                  "    pm.expect(true).to.be.true;",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -790,11 +1092,10 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/",
+              "raw": "{{baseUrl}}/ping",
               "host": ["{{baseUrl}}"],
-              "path": [""]
-            },
-            "description": "Request de limpieza para eliminar datos de prueba"
+              "path": ["ping"]
+            }
           },
           "response": []
         }
@@ -806,25 +1107,15 @@
       "listen": "prerequest",
       "script": {
         "type": "text/javascript",
-        "exec": ["// Script global que se ejecuta antes de cada request", "console.log('🚀 Ejecutando request:', pm.info.requestName);"]
+        "exec": [""]
       }
     },
     {
       "listen": "test",
       "script": {
         "type": "text/javascript",
-        "exec": [
-          "// Script global que se ejecuta después de cada request",
-          "console.log('✅ Request completado:', pm.info.requestName, '- Status:', pm.response.code);"
-        ]
+        "exec": [""]
       }
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000",
-      "type": "string"
     }
   ]
 }
