@@ -1,0 +1,448 @@
+{
+  "info": {
+    "_postman_id": "7a8b9c2d-4e5f-6789-abc1-def234567890",
+    "name": "🧠 ConverSafe Chat Analyzer API | Análisis de Conversaciones con IA",
+    "description": "Colección para probar el servicio de análisis de conversaciones que utiliza FastAPI y Google Gemini AI para extraer insights de chats de equipos de desarrollo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "613062"
+  },
+  "item": [
+    {
+      "name": "Precondiciones",
+      "item": [
+        {
+          "name": "SETUP: Verificar servicio activo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"🧪 Verificando que el servicio de análisis esté activo...\");",
+                  "",
+                  "// Si baseUrlAI no está definido, usar localhost por defecto",
+                  "let defaultUrl = 'http://127.0.0.1:8000';",
+                  "if (!pm.environment.get('baseUrlAI')) {",
+                  "    pm.environment.set('baseUrlAI', defaultUrl);",
+                  "    console.log('⚠️ baseUrlAI no definido. Usando por defecto:', defaultUrl);",
+                  "} else {",
+                  "    console.log('🌐 baseUrlAI:', pm.environment.get('baseUrlAI'));",
+                  "}",
+                  "",
+                  "pm.test(\"✅ Debería tener baseUrlAI definido\", function () {",
+                  "    pm.expect(pm.environment.get('baseUrlAI')).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Servicio debería estar corriendo\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Debería retornar status de servicio activo\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('Chat Analysis Service is running');",
+                  "});",
+                  "",
+                  "console.log('🚀 Servicio de análisis verificado y listo para pruebas');"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrlAI}}/",
+              "host": ["{{baseUrlAI}}"],
+              "path": [""]
+            },
+            "description": "Verificar que el servicio FastAPI esté corriendo correctamente"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔍 POST /analizar_conversacion - Análisis Principal",
+      "item": [
+        {
+          "name": "TC1: Debería analizar conversación con bloqueadores técnicos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar estructura completa de análisis\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.usuarios).to.be.an('array');",
+                  "    pm.expect(jsonData.equipo).to.exist;",
+                  "    pm.expect(jsonData.decisiones_pendientes).to.be.an('array');",
+                  "    pm.expect(jsonData.conceptos_detectados).to.exist;",
+                  "    pm.expect(jsonData.feedback_asistente).to.be.an('array');",
+                  "    pm.expect(jsonData.resumen_general).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.test(\"Debería detectar usuarios participantes\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.usuarios.length).to.be.above(0);",
+                  "    jsonData.usuarios.forEach(function(usuario) {",
+                  "        pm.expect(usuario.nombre).to.exist;",
+                  "        pm.expect(usuario.participacion).to.be.a('number');",
+                  "        pm.expect(usuario.eficacia_comunicacion).to.exist;",
+                  "        pm.expect(usuario.enfoque_conversacion).to.exist;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Debería incluir métricas del equipo\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.equipo.nivel_conflicto_colaboracion).to.be.a('number');",
+                  "    pm.expect(jsonData.equipo.estado_actual).to.exist;",
+                  "    pm.expect(jsonData.equipo.rendimiento_laboral).to.be.a('number');",
+                  "    pm.expect(jsonData.equipo.actividad).to.exist;",
+                  "    pm.expect(jsonData.equipo.actividad.miembros_activos).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test(\"Debería detectar conceptos clave\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var conceptos = jsonData.conceptos_detectados;",
+                  "    pm.expect(conceptos.bloqueadores_tecnicos).to.be.an('array');",
+                  "    pm.expect(conceptos.cuellos_de_botella).to.be.an('array');",
+                  "    pm.expect(conceptos.riesgos_proyecto).to.be.an('array');",
+                  "    pm.expect(conceptos.decisiones_clave).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log('✅ Análisis completado - Conceptos detectados:', JSON.stringify(pm.response.json().conceptos_detectados, null, 2));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mensajes\": [\n        {\n            \"usuario\": \"Alex\",\n            \"texto\": \"Necesitamos resolver este bug urgente, nos está dando muchos problemas y no hay nadie arreglándolo. Esto podría retrasar el release.\",\n            \"marca_de_tiempo\": \"2024-12-10T10:00:00Z\"\n        },\n        {\n            \"usuario\": \"Maria\",\n            \"texto\": \"Estoy trabajando en eso ahora mismo. Necesito acceso a la base de datos de producción para debuggear.\",\n            \"marca_de_tiempo\": \"2024-12-10T10:01:00Z\"\n        },\n        {\n            \"usuario\": \"Carlos\",\n            \"texto\": \"¿Podemos postponer algunas features para cumplir con la fecha? El cliente está presionando mucho.\",\n            \"marca_de_tiempo\": \"2024-12-10T10:05:00Z\"\n        },\n        {\n            \"usuario\": \"Ana\",\n            \"texto\": \"Yo puedo ayudar con el frontend si liberan el backend. Pero necesitamos definir bien los requirements.\",\n            \"marca_de_tiempo\": \"2024-12-10T10:07:00Z\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlAI}}/analizar_conversacion",
+              "host": ["{{baseUrlAI}}"],
+              "path": ["analizar_conversacion"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC2: Debería analizar conversación simple y colaborativa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería identificar menor cantidad de riesgos\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    // En conversación colaborativa debería haber menos riesgos",
+                  "    pm.expect(jsonData.conceptos_detectados.riesgos_proyecto.length).to.be.lessThan(3);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería mostrar equipo colaborativo\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.equipo.estado_actual).to.be.oneOf(['colaborador', 'conflictivo']);",
+                  "    pm.expect(jsonData.equipo.nivel_conflicto_colaboracion).to.be.above(50);",
+                  "});",
+                  "",
+                  "console.log('✅ Análisis de conversación colaborativa completado');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mensajes\": [\n        {\n            \"usuario\": \"Dev1\",\n            \"texto\": \"La feature está lista para testing\",\n            \"marca_de_tiempo\": \"2024-12-10T09:00:00Z\"\n        },\n        {\n            \"usuario\": \"QA1\",\n            \"texto\": \"Perfecto, empiezo las pruebas ahora. ¿Algún caso específico que deba revisar?\",\n            \"marca_de_tiempo\": \"2024-12-10T09:01:00Z\"\n        },\n        {\n            \"usuario\": \"Dev1\",\n            \"texto\": \"Sí, por favor revisa el flujo de login y el manejo de errores en el formulario.\",\n            \"marca_de_tiempo\": \"2024-12-10T09:02:00Z\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlAI}}/analizar_conversacion",
+              "host": ["{{baseUrlAI}}"],
+              "path": ["analizar_conversacion"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC3: Debería fallar con payload vacío",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 422 Validation Error\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar detalles del error de validación\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrlAI}}/analizar_conversacion",
+              "host": ["{{baseUrlAI}}"],
+              "path": ["analizar_conversacion"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC4: Debería fallar con estructura incorrecta de mensajes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 422 Validation Error\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería indicar error en estructura de mensajes\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mensajes\": [\n        {\n            \"usuario\": \"Test\",\n            \"texto_incorrecto\": \"Campo equivocado\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlAI}}/analizar_conversacion",
+              "host": ["{{baseUrlAI}}"],
+              "path": ["analizar_conversacion"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC5: Debería manejar conversación con decisiones pendientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería detectar decisiones pendientes\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.decisiones_pendientes).to.be.an('array');",
+                  "    // Esperamos que detecte al menos una decisión pendiente",
+                  "    pm.expect(jsonData.decisiones_pendientes.length).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería detectar hitos y plazos\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.conceptos_detectados.hitos_plazos).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log('📋 Decisiones pendientes detectadas:', pm.response.json().decisiones_pendientes);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mensajes\": [\n        {\n            \"usuario\": \"ProjectManager\",\n            \"texto\": \"Necesitamos decidir si vamos con la arquitectura A o B antes del viernes. También pendiente definir el stack de testing.\",\n            \"marca_de_tiempo\": \"2024-12-10T14:00:00Z\"\n        },\n        {\n            \"usuario\": \"TechLead\",\n            \"texto\": \"Yo voto por arquitectura A, pero necesitamos la aprobación del cliente antes de proceder.\",\n            \"marca_de_tiempo\": \"2024-12-10T14:02:00Z\"\n        },\n        {\n            \"usuario\": \"Developer\",\n            \"texto\": \"¿Cuándo es la deadline final? Necesito saber para planificar mis tareas.\",\n            \"marca_de_tiempo\": \"2024-12-10T14:05:00Z\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlAI}}/analizar_conversacion",
+              "host": ["{{baseUrlAI}}"],
+              "path": ["analizar_conversacion"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔧 Casos Edge y Límites",
+      "item": [
+        {
+          "name": "TC6: Debería manejar conversación con un solo mensaje",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería manejar usuario único correctamente\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.usuarios.length).to.eql(1);",
+                  "    pm.expect(jsonData.usuarios[0].participacion).to.eql(100);",
+                  "});",
+                  "",
+                  "pm.test(\"Actividad del equipo debería reflejar baja participación\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.equipo.actividad.miembros_activos).to.eql(1);",
+                  "    pm.expect(jsonData.equipo.actividad.mensajes_de_hoy).to.eql(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mensajes\": [\n        {\n            \"usuario\": \"SoloUser\",\n            \"texto\": \"Trabajando en la documentación de la API\",\n            \"marca_de_tiempo\": \"2024-12-10T16:00:00Z\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlAI}}/analizar_conversacion",
+              "host": ["{{baseUrlAI}}"],
+              "path": ["analizar_conversacion"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC7: Debería fallar sin API Key de Gemini",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 500 Internal Server Error\", function () {",
+                  "    pm.response.to.have.status(500);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería indicar error de configuración\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail).to.exist;",
+                  "    pm.expect(jsonData.detail).to.include('Error al procesar');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mensajes\": [\n        {\n            \"usuario\": \"Test\",\n            \"texto\": \"Mensaje de prueba cuando no hay API key\",\n            \"marca_de_tiempo\": \"2024-12-10T16:00:00Z\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrlAI}}/analizar_conversacion",
+              "host": ["{{baseUrlAI}}"],
+              "path": ["analizar_conversacion"]
+            },
+            "description": "Este test fallará si GEMINI_API_KEY no está configurada"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": ["// Script global que se ejecuta antes de cada request", "console.log('🚀 Preparando request para:', pm.request.name);"]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Script global que se ejecuta después de cada request",
+          "console.log('✅ Request completado:', pm.request.name, '- Status:', pm.response.status);"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrlAI",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    }
+  ]
+}
