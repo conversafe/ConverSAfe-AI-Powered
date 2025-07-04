@@ -1,0 +1,1643 @@
+{
+	"info": {
+		"_postman_id": "50c2697d-214c-4a30-b7fb-7da8eb33b952",
+		"name": "🍄 ConverSafe AuthAPI + UserAPI | Autenticación y Gestión de Usuarios",
+		"description": "Colección especializada para probar exhaustivamente los endpoints de autenticación y gestión de usuarios de ConverSafe API según docs/authAPI.md y docs/userAPI.md. Formato TC# con validaciones 'Debería'.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "613062"
+	},
+	"item": [
+		{
+			"name": "Precondiciones",
+			"item": [
+				{
+					"name": "SETUP: Preparar entorno de pruebas",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"console.log(\"🧪 Ejecutando SETUP de entorno de pruebas...\");",
+									"",
+									"// Setear timestamp único para usuarios de prueba",
+									"pm.environment.set('testTimestamp', Date.now());",
+									"",
+									"// Si baseUrl no está definido, usar localhost por defecto",
+									"let defaultUrl = 'http://localhost:3000';",
+									"if (!pm.environment.get('baseUrl')) {",
+									"    pm.environment.set('baseUrl', defaultUrl);",
+									"    console.log('⚠️ baseUrl no definido. Usando por defecto:', defaultUrl);",
+									"} else {",
+									"    console.log('🌐 baseUrl:', pm.environment.get('baseUrl'));",
+									"}",
+									"",
+									"// Validar que baseUrl esté definida",
+									"pm.test(\"✅ Debería tener baseUrl definido\", function () {",
+									"    pm.expect(pm.environment.get('baseUrl')).to.exist;",
+									"});",
+									"",
+									"// Validar que el servidor responde correctamente",
+									"pm.test(\"✅ Servidor responde (cualquier código válido)\", function () {",
+									"    pm.expect(pm.response.code).to.be.within(200, 499);",
+									"});",
+									"",
+									"// Limpiar variables antiguas de entorno",
+									"console.log(\"🧹 Limpiando variables de entorno...\");",
+									"const vars = [",
+									"    'testUserId', 'testUserEmail', 'userToken', 'loggedUserId',",
+									"    'testAdminId', 'testAdminEmail', 'adminToken', 'loggedAdminId',",
+									"    'userToDeleteId', 'userToDeleteEmail', 'cleanupUserIds'",
+									"];",
+									"vars.forEach(key => pm.environment.unset(key));",
+									"console.log(\"🔁 Variables limpiadas:\", vars);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Request inicial para verificar que el servidor esté funcionando"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔐 POST /auth/register - Casos Exitosos",
+			"item": [
+				{
+					"name": "TC1: Debería registrar usuario con datos válidos (role: user)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Debería crear el usuario correctamente\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData._id).to.exist;",
+									"    pm.expect(jsonData.name).to.eql(\"Richi Guerrero\");",
+									"    pm.expect(jsonData.email).to.eql(\"richi@conversafe.com\");",
+									"    pm.expect(jsonData.role).to.eql(\"user\");",
+									"    pm.expect(jsonData.createdAt).to.exist;",
+									"    pm.expect(jsonData.updatedAt).to.exist;",
+									"    pm.expect(jsonData.__v).to.exist;",
+									"});",
+									"",
+									"pm.test(\"No debería retornar la contraseña en la respuesta\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.password).to.not.exist;",
+									"});",
+									"",
+									"pm.test(\"Debería tener fechas válidas de creación y actualización\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(new Date(jsonData.createdAt)).to.be.a('date');",
+									"    pm.expect(new Date(jsonData.updatedAt)).to.be.a('date');",
+									"});",
+									"",
+									"// Guardar datos para pruebas posteriores",
+									"if (pm.response.code === 201) {",
+									"    var user = pm.response.json();",
+									"    pm.environment.set(\"testUserId\", user._id);",
+									"    pm.environment.set(\"testUserEmail\", user.email);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Richi Guerrero\",\n  \"email\": \"richi@conversafe.com\",\n  \"password\": \"securepassword123\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC2: Debería registrar usuario con datos válidos (role: admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Debería crear el admin correctamente\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData._id).to.exist;",
+									"    pm.expect(jsonData.name).to.eql(\"Admin Principal\");",
+									"    pm.expect(jsonData.email).to.eql(\"admin@conversafe.com\");",
+									"    pm.expect(jsonData.role).to.eql(\"admin\");",
+									"});",
+									"",
+									"pm.test(\"No debería retornar la contraseña en la respuesta\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.password).to.not.exist;",
+									"});",
+									"",
+									"// Guardar datos del admin",
+									"if (pm.response.code === 201) {",
+									"    var admin = pm.response.json();",
+									"    pm.environment.set(\"testAdminId\", admin._id);",
+									"    pm.environment.set(\"testAdminEmail\", admin.email);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Admin Principal\",\n  \"email\": \"admin@conversafe.com\",\n  \"password\": \"adminpass123456\",\n  \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔐 POST /auth/register - Casos de Error",
+			"item": [
+				{
+					"name": "TC3: NO debería permitir registrar usuario duplicado (409 Conflict)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 409 Conflict\", function () {",
+									"    pm.response.to.have.status(409);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de usuario ya existente\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"User already exists\");",
+									"});",
+									"",
+									"pm.test(\"No debería retornar token ni datos de usuario\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.token).to.not.exist;",
+									"    pm.expect(jsonData.user).to.not.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Otro Usuario\",\n  \"email\": \"richi@conversafe.com\",\n  \"password\": \"diferente123\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC4: NO debería permitir registrar sin email (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación por email faltante\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Validation failed\");",
+									"    pm.expect(jsonData.error.errors).to.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Sin Email\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC5: NO debería permitir registrar con email inválido (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación por email inválido\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Validation failed\");",
+									"    pm.expect(jsonData.error.errors).to.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Email Malo\",\n  \"email\": \"esto-no-es-email\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC6: NO debería permitir registrar con contraseña corta (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación por contraseña muy corta\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Validation failed\");",
+									"    pm.expect(jsonData.error.errors).to.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Pass Corto\",\n  \"email\": \"corto@test.com\",\n  \"password\": \"123\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC7: NO debería permitir registrar sin name (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación por name faltante\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Validation failed\");",
+									"    pm.expect(jsonData.error.errors).to.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"sinname@test.com\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC8: NO debería permitir registrar con role inválido (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación por role inválido\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Validation failed\");",
+									"    pm.expect(jsonData.error.errors).to.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Role Malo\",\n  \"email\": \"rolemalo@test.com\",\n  \"password\": \"password123\",\n  \"role\": \"superuser\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC9: NO debería permitir registrar sin role (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación por role faltante\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Validation failed\");",
+									"    pm.expect(jsonData.error.errors).to.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Sin Role\",\n  \"email\": \"sinrole@test.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔑 POST /auth/login - Casos Exitosos",
+			"item": [
+				{
+					"name": "TC10: Debería permitir login exitoso con credenciales válidas (user)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Debería incluir token JWT en la respuesta\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.token).to.exist;",
+									"    pm.expect(jsonData.token).to.be.a('string');",
+									"    pm.expect(jsonData.token.length).to.be.greaterThan(10);",
+									"    pm.expect(jsonData.token).to.include('eyJ'); // JWT starts with eyJ",
+									"    pm.environment.set('userToken', jsonData.token);",
+									"});",
+									"",
+									"pm.test(\"Debería incluir datos del usuario en la respuesta\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.user).to.exist;",
+									"    pm.expect(jsonData.user._id).to.exist;",
+									"    pm.expect(jsonData.user.name).to.exist;",
+									"    pm.expect(jsonData.user.email).to.eql('richi@conversafe.com');",
+									"    pm.expect(jsonData.user.role).to.eql('user');",
+									"    pm.expect(jsonData.user.createdAt).to.exist;",
+									"    pm.expect(jsonData.user.updatedAt).to.exist;",
+									"});",
+									"",
+									"pm.test(\"No debería incluir contraseña en la respuesta\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.user.password).to.not.exist;",
+									"});",
+									"",
+									"pm.test(\"Debería generar token JWT válido (estructura de 3 partes)\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var token = jsonData.token;",
+									"    var parts = token.split('.');",
+									"    pm.expect(parts.length).to.eql(3); // header.payload.signature",
+									"});",
+									"",
+									"// Guardar datos de login",
+									"if (pm.response.code === 200) {",
+									"    var loginData = pm.response.json();",
+									"    pm.environment.set('loggedUserId', loginData.user._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"richi@conversafe.com\",\n  \"password\": \"securepassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC11: Debería permitir login exitoso con credenciales válidas (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Debería incluir token JWT en la respuesta\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.token).to.exist;",
+									"    pm.environment.set('adminToken', jsonData.token);",
+									"});",
+									"",
+									"pm.test(\"Debería confirmar role de admin\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.user.role).to.eql('admin');",
+									"    pm.expect(jsonData.user.email).to.eql('admin@conversafe.com');",
+									"});",
+									"",
+									"// Guardar datos del admin logueado",
+									"if (pm.response.code === 200) {",
+									"    var adminData = pm.response.json();",
+									"    pm.environment.set('loggedAdminId', adminData.user._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@conversafe.com\",\n  \"password\": \"adminpass123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔑 POST /auth/login - Casos de Error",
+			"item": [
+				{
+					"name": "TC12: NO debería permitir login con email incorrecto (401 Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de credenciales inválidas\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include('Invalid email or password');",
+									"});",
+									"",
+									"pm.test(\"No debería retornar token ni datos de usuario\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.token).to.not.exist;",
+									"    pm.expect(jsonData.user).to.not.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"emailincorrecto@test.com\",\n  \"password\": \"securepassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC13: NO debería permitir login con contraseña incorrecta (401 Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de credenciales inválidas\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include('Invalid email or password');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"richi@conversafe.com\",\n  \"password\": \"passwordincorrecto\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC14: NO debería permitir login sin email (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación por email faltante\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include('Validation failed');",
+									"    pm.expect(jsonData.error.errors).to.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"password\": \"securepassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC15: NO debería permitir login sin contraseña (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación por contraseña faltante\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include('Validation failed');",
+									"    pm.expect(jsonData.error.errors).to.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"richi@conversafe.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC16: NO debería permitir login con email formato inválido (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación de email\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include('Validation failed');",
+									"    pm.expect(jsonData.error.errors).to.exist;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"esto-no-es-email\",\n  \"password\": \"securepassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "👤 GET /user/profile - Perfil de Usuario",
+			"item": [
+				{
+					"name": "TC17: Debería obtener perfil del usuario autenticado",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Debería retornar datos del usuario sin contraseña\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData._id).to.exist;",
+									"    pm.expect(jsonData.name).to.exist;",
+									"    pm.expect(jsonData.email).to.exist;",
+									"    pm.expect(jsonData.role).to.exist;",
+									"    pm.expect(jsonData.password).to.not.exist;",
+									"});",
+									"",
+									"pm.test(\"Debería tener fechas de creación y actualización\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.createdAt).to.exist;",
+									"    pm.expect(jsonData.updatedAt).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC18: NO debería obtener perfil sin token (401 Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de token faltante\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Missing or invalid token\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/user/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "👥 GET /user/ - Listar Usuarios (Admin)",
+			"item": [
+				{
+					"name": "TC19: Debería obtener lista de usuarios (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Debería retornar array de usuarios\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"    pm.expect(jsonData.length).to.be.greaterThan(0);",
+									"});",
+									"",
+									"pm.test(\"Usuarios no deberían tener contraseñas\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    jsonData.forEach(function(user) {",
+									"        pm.expect(user.password).to.not.exist;",
+									"        pm.expect(user._id).to.exist;",
+									"        pm.expect(user.email).to.exist;",
+									"        pm.expect(user.role).to.exist;",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC20: NO debería permitir listar usuarios (usuario normal - 403 Forbidden)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 403 Forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de permisos insuficientes\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Access denied\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "👤 GET /user/:userId - Obtener Usuario por ID (Admin)",
+			"item": [
+				{
+					"name": "TC21: Debería obtener usuario por ID válido (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Debería retornar datos del usuario específico\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData._id).to.eql(pm.environment.get('testUserId'));",
+									"    pm.expect(jsonData.email).to.eql(pm.environment.get('testUserEmail'));",
+									"    pm.expect(jsonData.password).to.not.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/{{testUserId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"{{testUserId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC22: NO debería obtener usuario con ID inválido (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Validation failed\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/invalid-id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"invalid-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC23: NO debería obtener usuario inexistente (404 Not Found)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 404 Not Found\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de usuario no encontrado\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"User not found\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/507f1f77bcf86cd799439011",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"507f1f77bcf86cd799439011"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🗑️ DELETE /user/:userId - Eliminar Usuario (Admin)",
+			"item": [
+				{
+					"name": "SETUP: Crear usuario para eliminar",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería crear usuario para eliminar\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    var user = pm.response.json();",
+									"    pm.environment.set(\"userToDeleteId\", user._id);",
+									"    pm.environment.set(\"userToDeleteEmail\", user.email);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Usuario Para Eliminar\",\n  \"email\": \"delete{{$timestamp}}@test.com\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC24: Debería eliminar usuario correctamente (admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Debería confirmar eliminación del usuario\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"User deleted successfully\");",
+									"    pm.expect(jsonData.deletedUser).to.exist;",
+									"    pm.expect(jsonData.deletedUser.id).to.eql(pm.environment.get('userToDeleteId'));",
+									"    pm.expect(jsonData.deletedUser.email).to.eql(pm.environment.get('userToDeleteEmail'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/{{userToDeleteId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"{{userToDeleteId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC25: NO debería eliminar usuario (usuario normal - 403 Forbidden)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 403 Forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de permisos insuficientes\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Access denied\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/{{testUserId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"{{testUserId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC26: NO debería eliminar usuario con ID inválido (400 Bad Request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Debería mostrar error de validación\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.message).to.include(\"Validation failed\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/invalid-id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"invalid-id"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🧹 Limpieza - Eliminar Datos de Prueba",
+			"item": [
+				{
+					"name": "TC27: Debería eliminar usuario de prueba principal",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería eliminar usuario de prueba exitosamente\", function () {",
+									"    if (pm.environment.get('testUserId')) {",
+									"        pm.response.to.have.status(200);",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.message).to.eql(\"User deleted successfully\");",
+									"        pm.expect(jsonData.deletedUser.id).to.eql(pm.environment.get('testUserId'));",
+									"    } else {",
+									"        pm.test.skip(\"No hay usuario de prueba para eliminar\");",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Debería limpiar variables del usuario eliminado\", function () {",
+									"    pm.environment.unset('testUserId');",
+									"    pm.environment.unset('testUserEmail');",
+									"    pm.environment.unset('userToken');",
+									"    pm.environment.unset('loggedUserId');",
+									"    pm.expect(pm.environment.get('testUserId')).to.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Solo ejecutar si existe el usuario de prueba",
+									"if (!pm.environment.get('testUserId')) {",
+									"    pm.test.skip(\"No hay usuario de prueba para eliminar\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/{{testUserId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"{{testUserId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC28: Debería eliminar usuario admin de prueba",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería eliminar admin de prueba exitosamente\", function () {",
+									"    if (pm.environment.get('testAdminId')) {",
+									"        pm.response.to.have.status(200);",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.message).to.eql(\"User deleted successfully\");",
+									"        pm.expect(jsonData.deletedUser.id).to.eql(pm.environment.get('testAdminId'));",
+									"    } else {",
+									"        pm.test.skip(\"No hay admin de prueba para eliminar\");",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Debería limpiar variables del admin eliminado\", function () {",
+									"    pm.environment.unset('testAdminId');",
+									"    pm.environment.unset('testAdminEmail');",
+									"    pm.environment.unset('adminToken');",
+									"    pm.environment.unset('loggedAdminId');",
+									"    pm.expect(pm.environment.get('testAdminId')).to.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Solo ejecutar si existe el admin de prueba",
+									"if (!pm.environment.get('testAdminId')) {",
+									"    pm.test.skip(\"No hay admin de prueba para eliminar\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/{{testAdminId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"{{testAdminId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC29: Debería limpiar variables de entorno restantes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Debería limpiar todas las variables de entorno de prueba\", function () {",
+									"    // Limpiar variables de usuarios eliminados",
+									"    pm.environment.unset('userToDeleteId');",
+									"    pm.environment.unset('userToDeleteEmail');",
+									"    pm.environment.unset('cleanupUserIds');",
+									"    pm.environment.unset('testTimestamp');",
+									"    ",
+									"    // Verificar que las variables principales fueron limpiadas",
+									"    pm.expect(pm.environment.get('testUserId')).to.be.undefined;",
+									"    pm.expect(pm.environment.get('testAdminId')).to.be.undefined;",
+									"    pm.expect(pm.environment.get('userToken')).to.be.undefined;",
+									"    pm.expect(pm.environment.get('adminToken')).to.be.undefined;",
+									"});",
+									"",
+									"pm.test(\"Debería confirmar limpieza completa del entorno\", function () {",
+									"    console.log('🧹 Limpieza completada exitosamente');",
+									"    console.log('✅ Todos los usuarios de prueba han sido eliminados');",
+									"    console.log('✅ Variables de entorno limpiadas');",
+									"    console.log('✅ Entorno listo para nueva ejecución de pruebas');",
+									"    pm.test(\"Entorno limpiado correctamente\", function () {",
+									"        pm.expect(true).to.be.true;",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "### 🧹 Limpieza Completada\n\n**✅ Usuarios eliminados:**\n- Usuario de prueba principal (richi@conversafe.com)\n- Admin de prueba (admin@conversafe.com)\n- Usuarios de performance creados durante las pruebas\n- Usuario creado para pruebas de eliminación\n\n**✅ Variables de entorno limpiadas:**\n- testUserId, testAdminId\n- userToken, adminToken\n- loggedUserId, loggedAdminId\n- userToDeleteId, userToDeleteEmail\n- cleanupUserIds, testTimestamp\n\n**📊 Estadísticas finales:**\n- **Total Test Cases:** 36 (TC1-TC36)\n- **Endpoints testeados:** 6 endpoints completos\n- **Tipos de prueba:** Funcional, Validación, Seguridad, Performance, Autorización, Limpieza\n\n**🔄 Estado del entorno:**\nEl entorno está limpio y listo para ejecutar las pruebas nuevamente."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

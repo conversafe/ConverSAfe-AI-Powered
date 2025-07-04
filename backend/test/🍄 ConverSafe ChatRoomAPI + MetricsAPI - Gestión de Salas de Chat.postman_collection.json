@@ -1,0 +1,1121 @@
+{
+  "info": {
+    "_postman_id": "9f231185-362f-4f37-bfe1-d95fa2dcc806",
+    "name": "🍄 ConverSafe ChatRoomAPI + MetricsAPI | Gestión de Salas de Chat",
+    "description": "Colección especializada para probar exhaustivamente los endpoints de gestión de salas de chat de ConverSafe API según docs/chatRoomAPI.md y docs/metricsAPI.md. Formato TC# con validaciones 'Debería'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "613062"
+  },
+  "item": [
+    {
+      "name": "Precondiciones",
+      "item": [
+        {
+          "name": "SETUP: Preparar entorno de pruebas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.log(\"🧪 Ejecutando SETUP de entorno de pruebas...\");",
+                  "",
+                  "// Setear timestamp único para salas de prueba",
+                  "pm.environment.set('testTimestamp', Date.now());",
+                  "",
+                  "// Si baseUrl no está definido, usar localhost por defecto",
+                  "let defaultUrl = 'http://localhost:3000';",
+                  "if (!pm.environment.get('baseUrl')) {",
+                  "    pm.environment.set('baseUrl', defaultUrl);",
+                  "    console.log('⚠️ baseUrl no definido. Usando por defecto:', defaultUrl);",
+                  "} else {",
+                  "    console.log('🌐 baseUrl:', pm.environment.get('baseUrl'));",
+                  "}",
+                  "",
+                  "// Validar que baseUrl esté definida",
+                  "pm.test(\"✅ Debería tener baseUrl definido\", function () {",
+                  "    pm.expect(pm.environment.get('baseUrl')).to.exist;",
+                  "});",
+                  "",
+                  "// Validar que el servidor responde correctamente",
+                  "pm.test(\"✅ Servidor responde (cualquier código válido)\", function () {",
+                  "    pm.expect(pm.response.code).to.be.within(200, 499);",
+                  "});",
+                  "",
+                  "// Limpiar variables antiguas de entorno",
+                  "console.log(\"🧹 Limpiando variables de entorno...\");",
+                  "const vars = [",
+                  "    'testRoomId', 'testRoomName', 'testAccessCode', 'adminToken',",
+                  "    'userToken', 'testUserId', 'testAdminId', 'roomsToCleanup'",
+                  "];",
+                  "vars.forEach(key => pm.environment.unset(key));",
+                  "console.log(\"🔁 Variables limpiadas:\", vars);",
+                  "",
+                  "console.log('🚀 Iniciando setup automático de usuarios y tokens...');"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Request inicial para verificar que el servidor esté funcionando"
+          },
+          "response": []
+        },
+        {
+          "name": "SETUP: Registrar usuario Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Permitir tanto 201 (creado) como 409 (ya existe)",
+                  "pm.test(\"✅ Debería registrar admin o confirmar que ya existe\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Admin registrado exitosamente');",
+                  "    var adminData = pm.response.json();",
+                  "    pm.environment.set('testAdminId', adminData._id);",
+                  "    pm.environment.set('testAdminEmail', adminData.email);",
+                  "    console.log('📋 Admin ID guardado:', adminData._id);",
+                  "} else if (pm.response.code === 409) {",
+                  "    console.log('ℹ️ Admin ya existe, continuando...');",
+                  "    pm.environment.set('testAdminEmail', 'admin@chatroom.test');",
+                  "    // Nota: El ID se obtendrá en el login",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin ChatRoom\",\n  \"email\": \"admin@chatroom.test\",\n  \"password\": \"adminpass123456\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SETUP: Registrar usuario normal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Permitir tanto 201 (creado) como 409 (ya existe)",
+                  "pm.test(\"✅ Debería registrar user o confirmar que ya existe\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Usuario registrado exitosamente');",
+                  "    var userData = pm.response.json();",
+                  "    pm.environment.set('testUserId', userData._id);",
+                  "    pm.environment.set('testUserEmail', userData.email);",
+                  "    console.log('📋 User ID guardado:', userData._id);",
+                  "} else if (pm.response.code === 409) {",
+                  "    console.log('ℹ️ Usuario ya existe, continuando...');",
+                  "    pm.environment.set('testUserEmail', 'user@chatroom.test');",
+                  "    // Nota: El ID se obtendrá en el login",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"User ChatRoom\",\n  \"email\": \"user@chatroom.test\",\n  \"password\": \"userpass123456\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SETUP: Login Admin para obtener token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"✅ Debería hacer login exitoso del admin\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Debería obtener token JWT del admin\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.token).to.exist;",
+                  "    pm.expect(jsonData.token).to.be.a('string');",
+                  "    pm.expect(jsonData.token).to.include('eyJ'); // JWT starts with eyJ",
+                  "    pm.environment.set('adminToken', jsonData.token);",
+                  "    console.log('🔑 Admin token obtenido y guardado');",
+                  "    ",
+                  "    // Guardar ID del admin si no se tenía",
+                  "    if (jsonData.user && jsonData.user._id) {",
+                  "        pm.environment.set('testAdminId', jsonData.user._id);",
+                  "        console.log('📋 Admin ID guardado desde login:', jsonData.user._id);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Debería confirmar role de admin\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user.role).to.eql('admin');",
+                  "    pm.environment.set('testAdminId', jsonData.user._id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@chatroom.test\",\n  \"password\": \"adminpass123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SETUP: Login User para obtener token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"✅ Debería hacer login exitoso del user\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Debería obtener token JWT del user\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.token).to.exist;",
+                  "    pm.expect(jsonData.token).to.be.a('string');",
+                  "    pm.expect(jsonData.token).to.include('eyJ'); // JWT starts with eyJ",
+                  "    pm.environment.set('userToken', jsonData.token);",
+                  "    console.log('🔑 User token obtenido y guardado');",
+                  "    ",
+                  "    // Guardar ID del usuario si no se tenía",
+                  "    if (jsonData.user && jsonData.user._id) {",
+                  "        pm.environment.set('testUserId', jsonData.user._id);",
+                  "        console.log('📋 User ID guardado desde login:', jsonData.user._id);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"✅ Debería confirmar role de user\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user.role).to.eql('user');",
+                  "    pm.environment.set('testUserId', jsonData.user._id);",
+                  "});",
+                  "",
+                  "console.log('🎉 Setup completado - Tokens disponibles para tests de ChatRoom');"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@chatroom.test\",\n  \"password\": \"userpass123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛠 POST /chatrooms - Crear Sala",
+      "item": [
+        {
+          "name": "TC1: Debería crear sala de chat con datos válidos (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería crear la sala correctamente\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Room created\");",
+                  "    pm.expect(jsonData.roomId).to.exist;",
+                  "    pm.expect(jsonData.accessCode).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"Debería generar roomId válido (MongoDB ObjectId)\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.roomId).to.match(/^[0-9a-fA-F]{24}$/);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería generar accessCode válido\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.accessCode).to.be.a('string');",
+                  "    pm.expect(jsonData.accessCode).to.have.length.above(5);",
+                  "});",
+                  "",
+                  "// Guardar datos para pruebas posteriores",
+                  "if (pm.response.code === 201) {",
+                  "    var room = pm.response.json();",
+                  "    pm.environment.set(\"testRoomId\", room.roomId);",
+                  "    pm.environment.set(\"testAccessCode\", room.accessCode);",
+                  "    pm.environment.set(\"testRoomName\", \"Sprint Planning Test\");",
+                  "    console.log(\"💾 Guardado roomId:\", room.roomId);",
+                  "    console.log(\"💾 Guardado accessCode:\", room.accessCode);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sprint Planning Test\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC2: Debería fallar sin token de autorización",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar mensaje de error de autorización\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.message).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "packages": {},
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Room\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC3: Debería fallar con token de usuario (no admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar mensaje de permisos insuficientes\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.message).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Room\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC4: Debería fallar sin nombre de sala",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar mensaje de validación\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.message).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔍 GET /chatrooms/:id - Obtener Sala",
+      "item": [
+        {
+          "name": "TC5: Debería obtener datos de sala existente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar estructura completa de la sala\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData._id).to.exist;",
+                  "    pm.expect(jsonData.name).to.exist;",
+                  "    pm.expect(jsonData.admin).to.exist;",
+                  "    pm.expect(jsonData.participants).to.be.an('array');",
+                  "    pm.expect(jsonData.accessCode).to.exist;",
+                  "    pm.expect(jsonData.createdAt).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"Debería tener admin con datos completos\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.admin._id).to.exist;",
+                  "    pm.expect(jsonData.admin.name).to.exist;",
+                  "    pm.expect(jsonData.admin.email).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"Debería tener el mismo ID que se guardó\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData._id).to.eql(pm.environment.get('testRoomId'));",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/{{testRoomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "{{testRoomId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC6: Debería fallar con ID inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar mensaje de error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.message).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/660fcf2923ae3644b86dd999",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "660fcf2923ae3644b86dd999"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🤝 POST /chatrooms/join - Unirse a Sala",
+      "item": [
+        {
+          "name": "TC7: Debería unirse a sala con accessCode válido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería confirmar la unión a la sala\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Joined room\");",
+                  "    pm.expect(jsonData.roomId).to.exist;",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar el mismo roomId\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.roomId).to.eql(pm.environment.get('testRoomId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessCode\": \"{{testAccessCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "join"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC8: Debería fallar con accessCode inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar mensaje de error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.message).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessCode\": \"invalidcode123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "join"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC9: Debería fallar sin accessCode",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar mensaje de validación\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.message).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "join"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔥 GET /chatrooms/member - Salas del Usuario",
+      "item": [
+        {
+          "name": "TC10: Debería obtener salas donde el usuario es participante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar array de salas\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Cada sala debería tener estructura válida\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        jsonData.forEach(function(room) {",
+                  "            pm.expect(room._id).to.exist;",
+                  "            pm.expect(room.name).to.exist;",
+                  "            pm.expect(room.admin).to.exist;",
+                  "            pm.expect(room.accessCode).to.exist;",
+                  "            pm.expect(room.createdAt).to.exist;",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Debería incluir la sala de prueba creada\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var testRoomId = pm.environment.get('testRoomId');",
+                  "    var foundRoom = jsonData.find(room => room._id === testRoomId);",
+                  "    pm.expect(foundRoom).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/member",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "member"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC11: Usuario normal debería ver salas donde es participante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar array de salas\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Debería incluir la sala donde se unió\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var testRoomId = pm.environment.get('testRoomId');",
+                  "    var foundRoom = jsonData.find(room => room._id === testRoomId);",
+                  "    pm.expect(foundRoom).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/member",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "member"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 GET /chatrooms/:id/metrics - Métricas de Sala",
+      "item": [
+        {
+          "name": "TC12: Debería obtener métricas de participación (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar estructura completa de métricas\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.roomId).to.exist;",
+                  "    pm.expect(jsonData.roomName).to.exist;",
+                  "    pm.expect(jsonData.admin).to.exist;",
+                  "    pm.expect(jsonData.totalMessages).to.be.a('number');",
+                  "    pm.expect(jsonData.participants).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Cada participante debería tener métricas válidas\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    jsonData.participants.forEach(function(participant) {",
+                  "        pm.expect(participant._id).to.exist;",
+                  "        pm.expect(participant.name).to.exist;",
+                  "        pm.expect(participant.email).to.exist;",
+                  "        pm.expect(participant.messagesSent).to.be.a('number');",
+                  "        pm.expect(participant.participation).to.exist;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Debería coincidir con el roomId de prueba\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.roomId).to.eql(pm.environment.get('testRoomId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/{{testRoomId}}/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "{{testRoomId}}", "metrics"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC13: Debería fallar si no es admin de la sala",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar mensaje de permisos insuficientes\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.message).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/{{testRoomId}}/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "{{testRoomId}}", "metrics"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC14: Debería fallar con sala inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Debería responder con código 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Debería retornar mensaje de error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error.message).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatrooms/660fcf2923ae3644b86dd999/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["chatrooms", "660fcf2923ae3644b86dd999", "metrics"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧹 Cleanup",
+      "item": [
+        {
+          "name": "Delete Normal Test User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Normal user deletion completed', function () {",
+                  "    const responseCode = pm.response.code;",
+                  "    pm.expect([200, 404]).to.include(responseCode);",
+                  "    ",
+                  "    if (responseCode === 200) {",
+                  "        console.log('✅ Normal test user deleted successfully');",
+                  "    } else if (responseCode === 404) {",
+                  "        console.log('ℹ️ Normal test user not found (already deleted)');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testUserId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Admin Test User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Admin user deletion completed', function () {",
+                  "    const responseCode = pm.response.code;",
+                  "    // Admin puede fallar por auto-eliminación o no encontrado",
+                  "    pm.expect([200, 400, 404]).to.include(responseCode);",
+                  "    ",
+                  "    if (responseCode === 200) {",
+                  "        console.log('✅ Admin test user deleted successfully');",
+                  "    } else if (responseCode === 400) {",
+                  "        console.log('ℹ️ Admin cannot delete own account (expected)');",
+                  "    } else if (responseCode === 404) {",
+                  "        console.log('ℹ️ Admin test user not found (already deleted)');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testAdminId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testAdminId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clean Environment Variables",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Clean all test-related variables",
+                  "const vars = [",
+                  "    'adminToken', 'userToken', 'testRoomId', 'testAccessCode',",
+                  "    'testAdminId', 'testUserId', 'testAdminEmail', 'testUserEmail',",
+                  "    'testRoomName', 'roomsToCleanup', 'testTimestamp'",
+                  "];",
+                  "",
+                  "vars.forEach(key => {",
+                  "    pm.environment.unset(key);",
+                  "    console.log('🗑️ Variable eliminada:', key);",
+                  "});",
+                  "",
+                  "console.log('🧹 Environment variables cleaned');",
+                  "",
+                  "pm.test('Environment cleanup completed', function () {",
+                  "    pm.expect(true).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ping",
+              "host": ["{{baseUrl}}"],
+              "path": ["ping"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ]
+}
