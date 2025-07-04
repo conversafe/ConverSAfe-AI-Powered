@@ -1,24 +1,55 @@
-// pages/Admin/AdminCrearCanal.tsx
 import { useNavigate } from "react-router-dom";
 import Boton from "../../components/Boton";
 import Input from "../../components/Input";
 import { useState } from "react";
 import { FiEdit } from "react-icons/fi";
+import { agregarParticipante } from "@/services/chatSimulado"; // ⬅️ Asegúrate de importar
 
 const AdminCrearCanal = () => {
   const navigate = useNavigate();
   const [nombre, setNombre] = useState("");
+  const user = JSON.parse(localStorage.getItem("auth") || "{}")?.user;
+
+  const handleCrear = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre.trim() || !user) return;
+
+    const idGenerado = crypto.randomUUID();
+
+    // Guardar sala
+    const canales = JSON.parse(localStorage.getItem("canales") || "[]");
+    canales.push({
+      id: idGenerado,
+      nombre,
+      creador: user.name,
+      creadorEmail: user.email,
+    });
+    localStorage.setItem("canales", JSON.stringify(canales));
+
+    // ✅ Agregar creador como participante
+    agregarParticipante(idGenerado, {
+      nombre: user.name,
+      rol: user.role === "admin" ? "Administrador" : "Usuario",
+      imagen: user.role === "admin" ? "/admin.png" : "/usuario1.png",
+    });
+
+    // Crear array de mensajes vacío
+    localStorage.setItem(`mensajes-${idGenerado}`, JSON.stringify([]));
+
+    // Redirigir a la sala (después de agregar participante)
+    setTimeout(() => {
+      const rutaDestino =
+        user.role === "admin"
+          ? `/admin/chatroom/${idGenerado}`
+          : `/user/chatroom/${idGenerado}`;
+      navigate(rutaDestino);
+    }, 0);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#EFF6FF] p-6 text-[#F9FAFB]">
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (nombre.trim()) {
-            console.log("Crear canal:", nombre);
-            navigate("/admin/sala/123"); // ruta ficticia
-          }
-        }}
+        onSubmit={handleCrear}
         className="w-full max-w-[1020px] h-[526px] bg-[#F9FAFB] border border-[#103A86] rounded-[16px]
                    px-[74px] py-[37px] flex flex-col justify-center gap-8 text-gray-800 shadow-md"
       >
@@ -30,7 +61,9 @@ const AdminCrearCanal = () => {
           </h2>
 
           <p className="text-center text-gray-600 max-w-md">
-            Para poder ayudarte a configurarlo a la medida que necesitas y entrenar a nuestra IA para que te ayude a administrar tu equipo de trabajo.
+            Para poder ayudarte a configurarlo a la medida que necesitas y
+            entrenar a nuestra IA para que te ayude a administrar tu equipo de
+            trabajo.
           </p>
 
           <Input

@@ -1,4 +1,3 @@
-// pages/Login.tsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Boton from "../../components/Boton";
@@ -6,6 +5,7 @@ import Input from "../../components/Input";
 import { FiMail, FiLock } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
+// import { apiClient } from "../../utils/apiClient"; // ← Descomenta para backend real
 
 const Login = () => {
   const navigate = useNavigate();
@@ -35,47 +35,69 @@ const Login = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let valid = true;
-    const newErrors = { email: "", password: "" };
+    // ✅ MODO SIMULADO usando localStorage
+    const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
 
-    if (!formData.email.includes("@")) {
-      newErrors.email = "Correo no válido";
-      valid = false;
+    const user = usuarios.find(
+      (u: any) =>
+        u.email === formData.email.trim() &&
+        u.password === formData.password.trim()
+    );
+
+    if (!user) {
+      alert("❌ Credenciales incorrectas");
+      return;
     }
 
-    if (formData.password.length < 6) {
-      newErrors.password = "Mínimo 6 caracteres";
-      valid = false;
+    const fakeToken = "FAKE-TOKEN";
+
+    localStorage.setItem("auth", JSON.stringify({ token: fakeToken, user }));
+
+    if (user.role === "admin") {
+      navigate("/admin/inicio");
+    } else {
+      navigate("/user/inicio");
     }
 
-    setErrors(newErrors);
+    // 🟦 DESCOMENTA ESTE BLOQUE PARA USAR EL BACKEND REAL
+    /*
+    const handleLogin = async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    if (valid) {
-      // Simulación de login
-      const role = formData.email.includes("admin") ? "admin" : "user";
+      try {
+        const data = await apiClient("/auth/login", {
+          method: "POST",
+          body: formData,
+        });
 
-      localStorage.setItem("auth", JSON.stringify({
-        email: formData.email,
-        role,
-        token: "fake-token",
-      }));
+        localStorage.setItem(
+          "auth",
+          JSON.stringify({ token: data.token, user: data.user })
+        );
 
-      if (role === "admin") {
-        navigate("/admin/inicio");
-      } else {
-        navigate("/user/inicio");
+        if (data.user.role === "admin") {
+          navigate("/admin/inicio");
+        } else {
+          navigate("/user/inicio");
+        }
+      } catch (err: any) {
+        if (err.status === 401) {
+          alert("❌ Credenciales incorrectas");
+        } else {
+          console.error("❌ Error:", err);
+          alert("Error al iniciar sesión");
+        }
       }
-    }
+    };
+    */
   };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
-      {/* Panel lateral (desktop) */}
       <div className="hidden md:flex md:w-1/2 items-center justify-center bg-[url('/Fondo.png')] bg-no-repeat bg-center bg-contain bg-white">
         <div className="w-[400px] h-[400px]" />
       </div>
 
-      {/* Panel formulario */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-6">
         <form onSubmit={handleLogin} className="w-full max-w-md space-y-6">
           <div className="md:hidden flex justify-center">

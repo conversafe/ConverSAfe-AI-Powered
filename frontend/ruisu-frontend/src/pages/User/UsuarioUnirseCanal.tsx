@@ -1,11 +1,10 @@
-// pages/Admin/AdminUnirseCanal.tsx
 import { useNavigate } from "react-router-dom";
 import Boton from "../../components/Boton";
 import Input from "../../components/Input";
 import { useState } from "react";
 import { FiHash } from "react-icons/fi";
 
-const AdminUnirseCanal = () => {
+const UsuarioUnirseCanal = () => {
   const navigate = useNavigate();
   const [codigo, setCodigo] = useState("");
 
@@ -15,8 +14,8 @@ const AdminUnirseCanal = () => {
         onSubmit={(e) => {
           e.preventDefault();
           if (codigo.trim()) {
-            console.log("Unirse al canal con código:", codigo);
-            navigate(`/admin/chatroom/${codigo}`);
+            console.log("Usuario se une al canal con código:", codigo);
+            navigate(`/user/chatroom/${codigo}`);
           }
         }}
         className="w-full max-w-[1020px] h-[526px] bg-[#F9FAFB] border border-[#103A86] rounded-[16px]
@@ -26,11 +25,11 @@ const AdminUnirseCanal = () => {
           <img src="/Logotype.png" alt="Logo" className="w-40 h-auto" />
 
           <h2 className="text-[48px] font-bold leading-[130%] tracking-[0.002em] text-[#103A86] text-center">
-            Ingresa el código del canal
+            Únete a un canal
           </h2>
 
           <p className="text-center text-gray-600 max-w-md">
-            Sé parte de tu equipo y trabaja eficientemente junto con la IA.
+            Ingresa el código que recibiste para colaborar con tu equipo y acceder a métricas en tiempo real.
           </p>
 
           <Input
@@ -43,7 +42,7 @@ const AdminUnirseCanal = () => {
           />
 
           <Boton
-            texto="Ingresar al canal"
+            texto="Unirse"
             tipo="submit"
             variant="primary"
             className="w-full max-w-[600px]"
@@ -54,4 +53,4 @@ const AdminUnirseCanal = () => {
   );
 };
 
-export default AdminUnirseCanal;
+export default UsuarioUnirseCanal;

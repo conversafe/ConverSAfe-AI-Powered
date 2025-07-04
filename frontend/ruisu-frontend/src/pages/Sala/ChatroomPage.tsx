@@ -1,9 +1,11 @@
+// src/pages/chatroom/ChatroomPage.tsx
+
 import Header from "../../components/Header";
 import SidebarParticipantes from "../../components/chat/SidebarParticipantes";
 import ChatMensajes from "../../components/chat/ChatMensajes";
 import PanelAsistenteIA from "../../components/chat/PanelAsistenteIA";
 
-const SalaChat = () => {
+const ChatroomPage = () => {
   return (
     <div className="flex flex-col h-screen bg-[#EFF6FF]">
       {/* Header fijo */}
@@ -30,4 +32,4 @@ const SalaChat = () => {
   );
 };
 
-export default SalaChat;
+export default ChatroomPage;

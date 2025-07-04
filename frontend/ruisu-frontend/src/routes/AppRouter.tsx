@@ -1,8 +1,11 @@
-// routes/AppRouter.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import PrivateRoute from "./PrivateRoute";
 import AdminInicio from "../pages/Admin/AdminInicio";
+import UsuarioInicio from "../pages/User/UsuarioInicio";
+import UsuarioUnirseCanal from "../pages/User/UsuarioUnirseCanal";
+import ChatroomAdmin from "../pages/Admin/ChatroomAdmin.tsx";
+import ChatroomUsuario from "../pages/User/ChatroomUsuario.tsx";
 
 import Welcome from "../pages/Welcome.tsx";
 import Login from "../pages/Auth/Login.tsx";
@@ -12,8 +15,6 @@ import CodeSent from "../pages/Auth/CodeSent.tsx";
 import ResetPassword from "../pages/Auth/ResetPassword.tsx";
 import AdminCrearCanal from "../pages/Admin/AdminCrearCanal.tsx";
 import AdminUnirseCanal from "../pages/Admin/AdminUnirseCanal.tsx";
-import SalaAdmin from "../pages/Admin/SalaAdmin.tsx";
-
 
 const AppRouter = () => {
   return (
@@ -25,14 +26,18 @@ const AppRouter = () => {
       <Route path="/code" element={<CodeSent />} />
       <Route path="/reset" element={<ResetPassword />} />
 
-      {/* Rutas protegidas (se crearán después) */}
-      <Route path="/admin/*" element={<div>Vista admin</div>} />
+      {/* Rutas ADMIN */}
       <Route path="/admin/inicio" element={<AdminInicio />} />
       <Route path="/admin/sala/nueva" element={<AdminCrearCanal />} />
       <Route path="/admin/sala/unirse" element={<AdminUnirseCanal />} />
-      <Route path="/admin/sala/:id" element={<SalaAdmin />} />
+      <Route path="/admin/chatroom/:id" element={<ChatroomAdmin />} />
 
-      <Route path="/user/*" element={<div>Vista usuario</div>} />
+      {/* Rutas USUARIO */}
+      <Route path="/user/inicio" element={<UsuarioInicio />} />
+      <Route path="/usuario/sala/unirse" element={<UsuarioUnirseCanal />} />
+      <Route path="/user/chatroom/:id" element={<ChatroomUsuario />} />
+
+      {/* Ruta protegida de ejemplo */}
       <Route path="/dashboard" element={<PrivateRoute />} />
 
       {/* Catch-all */}
