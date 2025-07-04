@@ -4,10 +4,10 @@ const Schema = mongoose.Schema;
 
 const metricSchema = new Schema(
   {
-    chatRoom: { 
-      type: Schema.Types.ObjectId, 
-      ref: "ChatRoom", 
-      required: true 
+    chatRoom: {
+      type: Schema.Types.ObjectId,
+      ref: "ChatRoom",
+      required: true,
     },
     metrics: {
       type: Schema.Types.Mixed,
