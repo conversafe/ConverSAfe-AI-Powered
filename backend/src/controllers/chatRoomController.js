@@ -1,5 +1,5 @@
-import { HTTP } from "../utils/httpConstants.js";
 import * as chatRoomServices from "../services/chatRoomServices.js";
+import { HTTP } from "../utils/httpConstants.js";
 
 export const createChatRoom = async (req, res, next) => {
   try {
@@ -19,7 +19,7 @@ export const createChatRoom = async (req, res, next) => {
     });
   } catch (err) {
     const error = new Error(`Error creating room: ${err.message}`);
-    error.statusCode = HTTP.STATUS.INTERNAL_ERROR;
+    error.statusCode = HTTP.STATUS.BAD_REQUEST;
     return next(error);
   }
 };
@@ -62,7 +62,7 @@ export const joinChatRoom = async (req, res, next) => {
     res.status(200).json({ message: "Joined room", roomId: room._id });
   } catch (err) {
     const error = new Error(`Error joining room: ${err.message}`);
-    error.statusCode = HTTP.STATUS.INTERNAL_ERROR;
+    error.statusCode = err.statusCode || HTTP.STATUS.INTERNAL_ERROR;
     return next(error);
   }
 };

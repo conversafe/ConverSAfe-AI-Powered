@@ -17,13 +17,6 @@ export const deleteUser = async (userId, requestingUser) => {
     throw error;
   }
 
-  // Evitar que el admin se elimine a sí mismo
-  if (user._id.toString() === requestingUser._id.toString()) {
-    const error = new Error("Cannot delete your own account");
-    error.statusCode = HTTP.STATUS.BAD_REQUEST;
-    throw error;
-  }
-
   // Eliminar el usuario
   await User.findByIdAndDelete(userId);
 

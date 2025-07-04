@@ -2,13 +2,12 @@ import { ChatRoom } from "../models/chatRoomModel.js";
 import { Metric } from "../models/metricModel.js";
 import { HTTP } from "../utils/httpConstants.js";
 
-
 export const processMetrics = async (roomId, data) => {
-  // ************************************************** 
-  // ************************************************** 
+  // **************************************************
+  // **************************************************
   // procesamiento de las métricas antes de guardarlas
-  // ************************************************** 
-  // ************************************************** 
+  // **************************************************
+  // **************************************************
   await Metric.create({
     chatRoom: roomId, // <- CORREGIDO: era "room"
     metrics: data, // <- CORREGIDO: era "matrics"
@@ -16,10 +15,7 @@ export const processMetrics = async (roomId, data) => {
 };
 
 export const getRoomMetrics = async (roomId, userId) => {
-  const room = await ChatRoom.findById(roomId)
-    .populate("participants", "name email")
-    .populate("admin", "name email")
-    .lean();
+  const room = await ChatRoom.findById(roomId).populate("participants", "name email").populate("admin", "name email").lean();
 
   if (!room) {
     const error = new Error("Room not found");
@@ -33,16 +29,13 @@ export const getRoomMetrics = async (roomId, userId) => {
     throw error;
   }
 
-  const metric = await Metric.findOne({ chatRoom: roomId })
-    .sort({ createdAt: -1 })
-    .lean();
+  const metric = await Metric.findOne({ chatRoom: roomId }).sort({ createdAt: -1 }).lean();
 
   return {
     room: room,
     metrics: metric?.metrics || null,
   };
 };
-
 
 // export const getRoomMetrics = async (roomId, userId) => {
 //   const room = await ChatRoom.findById(roomId)
@@ -105,4 +98,3 @@ export const getRoomMetrics = async (roomId, userId) => {
 //     participants: participantMetrics,
 //   };
 // };
-
