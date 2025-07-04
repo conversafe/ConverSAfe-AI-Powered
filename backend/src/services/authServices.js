@@ -1,9 +1,9 @@
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../models/userModel.js";
 import { HTTP } from "../utils/httpConstants.js";
-import bcrypt from "bcrypt";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'Secret Key'
+const JWT_SECRET = process.env.JWT_SECRET || "Secret Key";
 
 export const login = async (email, password) => {
   const user = await User.findOne({ email });
@@ -29,12 +29,12 @@ export const login = async (email, password) => {
   };
 };
 
-export const register = async (data) => {
+export const register = async data => {
   const { email } = data;
   const exists = await User.findOne({ email });
   if (exists) {
     const error = new Error("User already exists");
-    error.statusCode = HTTP.STATUS.BAD_REQUEST;
+    error.statusCode = HTTP.STATUS.CONFLICT;
     throw error;
   }
 
