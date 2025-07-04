@@ -23,7 +23,7 @@ export const getRoomMetrics = async (roomId, userId) => {
     throw error;
   }
 
-  if (room.admin.toString() !== userId.toString()) {
+  if (room.admin._id.toString() !== userId.toString()) {
     const error = new Error("You must be admin to view metrics");
     error.statusCode = HTTP.STATUS.FORBIDDEN;
     throw error;
