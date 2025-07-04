@@ -4,6 +4,8 @@ import { Message } from "../models/messageModel.js";
 
 export default async function registerChatSocket(io, socket) {
   socket.on("joinRoom", async ({ roomId }) => {
+    console.log("WS: joinRoom");
+
     const room = await ChatRoom.findById(roomId);
     if (!room) return socket.emit("chatError", "Room not found");
 
@@ -16,6 +18,8 @@ export default async function registerChatSocket(io, socket) {
   });
 
   socket.on("sendMessage", async ({ roomId, content }) => {
+    console.log("WS: sendMessage");
+    
     if (!roomId || !content?.trim()) {
       return socket.emit("chatError", "Invalid message payload");
     }
@@ -62,6 +66,7 @@ export default async function registerChatSocket(io, socket) {
   });
 
   socket.on("disconnect", () => {
+    console.log("WS: disconnect");
     console.log(`${socket.user.name} disconnected`);
   });
 }

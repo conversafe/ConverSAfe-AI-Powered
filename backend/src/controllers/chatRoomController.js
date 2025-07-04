@@ -11,7 +11,8 @@ export const createChatRoom = async (req, res, next) => {
     }
 
     const room = await chatRoomServices.createRoom(name, req.user);
-
+    console.log("Room Created");
+    console.log(room.accessCode);
     res.status(201).json({
       message: "Room created",
       roomId: room._id,
