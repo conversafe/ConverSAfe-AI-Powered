@@ -51,6 +51,8 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 # Modelos de entrada en snake_case
 class Mensaje(BaseModel):
     usuario: str
+    email: str
+    roomId: str
     texto: str
     marca_de_tiempo: str
 
@@ -206,4 +208,87 @@ def analizar_conversacion(conversacion: Conversacion):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error al procesar la conversación: {str(e)}"
+        )
+
+
+@app.post("/analizar_mensaje")
+def analizar_mensaje(mensaje: Mensaje):
+    try:
+        # Construir texto con un solo mensaje
+        texto_formateado = (
+            f"[{mensaje.usuario} - {mensaje.email}] en sala {mensaje.roomId} "
+            f"({mensaje.marca_de_tiempo}): {mensaje.texto}"
+        )
+
+        prompt = f"""
+        Eres un asistente de IA que analiza comunicación en equipos de desarrollo, a partir de un solo mensaje.
+
+        Tu tarea es identificar si el mensaje contiene alguno de los siguientes conceptos:
+        1. Bloqueadores técnicos
+        2. Cuellos de botella
+        3. Riesgos del proyecto
+        4. Decisiones clave
+        5. Requisitos cambiantes
+        6. Hitos y plazos
+        7. Necesidades de recursos
+        8. Dependencias entre tareas
+
+        Reglas:
+        - No inventes información.
+        - Si el mensaje no contiene ninguno de los conceptos, responde con arrays vacíos.
+        - Usa snake_case.
+        - No devuelvas texto fuera del JSON.
+        - Responde con una estructura que indique el concepto detectado, el nivel de urgencia (alto, medio, bajo) y un mensaje breve.
+
+        Formato de respuesta:
+        ```json
+        {{
+            "usuario": {{
+                "nombre": "{mensaje.usuario}",
+                "email": "{mensaje.email}",
+                "room_id": "{mensaje.roomId}"
+            }},
+            "conceptos_detectados": {{
+                "bloqueadores_tecnicos": ["string"],
+                "cuellos_de_botella": ["string"],
+                "riesgos_proyecto": ["string"],
+                "decisiones_clave": ["string"],
+                "requisitos_cambiantes": ["string"],
+                "hitos_plazos": ["string"],
+                "necesidades_recursos": ["string"],
+                "dependencias_tareas": ["string"]
+            }},
+            "nivel_urgencia": "alto" | "medio" | "bajo",
+            "comentario_asistente": "string"
+        }}
+        ```
+
+        Mensaje:
+        {texto_formateado}
+        """
+
+        # Llamar al modelo
+        response = model.generate_content(prompt)
+        response_text = response.text.strip()
+
+        # Parsear JSON devuelto por Gemini
+        if "```json" in response_text:
+            start = response_text.find("```json") + len("```json")
+            end = response_text.rfind("```")
+            json_str = response_text[start:end].strip()
+        else:
+            json_str = response_text
+
+        try:
+            resultado = json.loads(json_str)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=500, detail="JSON inválido devuelto por la IA"
+            )
+
+        return resultado
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error al analizar el mensaje: {str(e)}"
         )

@@ -47,7 +47,7 @@ export default async function registerChatSocket(io, socket) {
     //Enviar a la IA y guardar la métrica
     try {
       const response = await axios.post(
-        `${process.env.AI_URL}/analizar_conversacion`,
+        `${process.env.AI_URL}/analizar_mensaje`,
         {
           usuario: socket.user.name,
           email: socket.user.email,
