@@ -13,14 +13,27 @@ import google.generativeai as genai
 import json
 from typing import List
 import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 # Inicialización de FastAPI
 app = FastAPI()
 
-
 # Configuración segura de la API de Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    print("❌ GEMINI_API_KEY no encontrada en variables de entorno")
+    print("📁 Asegúrate de tener un archivo .env con: GEMINI_API_KEY=tu_clave_aqui")
+    print("📍 Ubicaciones buscadas: ./data/.env, ./data/chat_analyzer_api/.env")
+    raise ValueError("GEMINI_API_KEY no encontrada en variables de entorno")
+else:
+    print("✅ GEMINI_API_KEY cargada correctamente")
+
+genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-1.5-flash')
+
 
 # Modelos de entrada en snake_case
 class Mensaje(BaseModel):
@@ -41,9 +54,9 @@ def analizar_conversacion(conversacion: Conversacion):
         # Preparar conversación en formato texto
         mensajes_json = [mensaje.dict() for mensaje in conversacion.mensajes]
 
-        data_de_mensaje = ""
+        conversation_text = ""
         for msg in mensajes_json:
-            data_de_mensaje += f"[{msg['usuario']}]: {msg['texto']} ({msg['marca_de_tiempo']})\n"
+            conversation_text += f"[{msg['usuario']}]: {msg['texto']} ({msg['marca_de_tiempo']})\n"
 
 
         prompt = f"""
