@@ -6,7 +6,7 @@ import Dropdown from "../../components/Dropdown";
 import { FiUser, FiMail, FiLock } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
-// import { apiClient } from "../../utils/apiClient"; // ← Descomenta para usar el backend real
+import { registrarUsuario } from "@/services/auth";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -68,42 +68,8 @@ const Register = () => {
     setErrors(newErrors);
     if (!valid) return;
 
-    // ✅ SIMULACIÓN usando localStorage
-    const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-
-    if (usuarios.some((u: any) => u.email === formData.email.trim())) {
-      setErrors({ ...newErrors, email: "El correo ya está en uso" });
-      return;
-    }
-
-    const nuevoUsuario = {
-      _id: `u${Date.now()}`,
-      name: formData.name.trim(),
-      email: formData.email.trim(),
-      password: formData.password.trim(),
-      role: formData.role,
-    };
-
-    usuarios.push(nuevoUsuario);
-    localStorage.setItem("usuarios", JSON.stringify(usuarios));
-    localStorage.setItem(
-      "auth",
-      JSON.stringify({ token: "FAKE-TOKEN", user: nuevoUsuario })
-    );
-
-    if (nuevoUsuario.role === "admin") {
-      navigate("/admin/inicio");
-    } else {
-      navigate("/user/inicio");
-    }
-
-    // 🟦 DESCOMENTA ESTE BLOQUE PARA USAR BACKEND REAL
-    /*
     try {
-      const data = await apiClient("/auth/register", {
-        method: "POST",
-        body: formData,
-      });
+      const data = await registrarUsuario(formData as any);
 
       localStorage.setItem(
         "auth",
@@ -123,7 +89,6 @@ const Register = () => {
         alert("Error al registrar. Intenta nuevamente.");
       }
     }
-    */
   };
 
   return (
