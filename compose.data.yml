@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  data:
+    build: ./data
+    container_name: data
+    restart: always
+    env_file:
+      - ./data/.env
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge 

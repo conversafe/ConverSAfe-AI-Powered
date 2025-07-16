@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/conversafe
+      - AI_URL=http://data:8000
+      - JWT_SECRET=supersecreto
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+      - data
+    networks:
+      - app-network
+
+  data:
+    build: ./data
+    container_name: data
+    restart: always
+    env_file:
+      - ./data/.env
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    environment:
+      - VITE_API_URL=http://backend:3000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mongo_data:
+
+networks:
+  app-network:
+    driver: bridge 

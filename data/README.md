@@ -1,60 +1,38 @@
-# 🧠 Servicio de Análisis de Conversaciones con FastAPI y Gemini
+# Data (FastAPI + Gemini)
 
-Este repositorio contiene un servicio web desarrollado con **FastAPI** que utiliza el modelo de lenguaje **Gemini 1.5 Flash** para analizar conversaciones de equipos de desarrollo.
-El objetivo es identificar y extraer información clave como:
+Este servicio expone una API para analizar conversaciones usando FastAPI y el modelo Gemini de Google.
 
-- 🧱 Bloqueadores técnicos
-- ⏳ Cuellos de botella
-- ⚠️ Riesgos del proyecto
-- 🗂️ Otros conceptos relevantes para la gestión de proyectos
+## 🚀 Desarrollo con Compose
 
----
+La forma recomendada de trabajar es levantar MongoDB y el backend con Docker Compose, y ejecutar el servicio de data en modo desarrollo local para aprovechar el hot reload.
 
-## 📌 Descripción
+### 1. Levanta los servicios auxiliares con Compose
 
-La aplicación expone un endpoint `POST` que recibe una conversación en formato JSON.
-El flujo es el siguiente:
-
-1. El servicio procesa la conversación.
-2. La envía a la API de Gemini junto con un prompt especializado.
-3. Devuelve un JSON estructurado con el resultado del análisis.
-
-Este resultado incluye:
-
-- Métricas sobre la participación de los usuarios.
-- Estado general del equipo.
-- Decisiones pendientes.
-- Conceptos relevantes detectados.
-
----
-
-## ✨ Características
-
-- **Análisis de Conversaciones**: Utiliza IA para extraer información clave desde chats de equipo.
-- **Detección de Conceptos Clave**: Identifica bloqueadores, riesgos, decisiones, hitos, etc.
-- **Métricas de Usuario y Equipo**: Datos sobre participación individual y salud del equipo (colaboración, actividad, rendimiento).
-- **Formato de Salida Estructurado**: Resultados en JSON de fácil consumo.
-- **Integración con Gemini API**: Potencia del modelo `gemini-1.5-flash`.
-- **Basado en FastAPI**: API moderna, rápida y con documentación automática (Swagger UI / ReDoc).
-
----
-
-## ⚙️ Configuración
-
-Para ejecutar este servicio necesitarás:
-
-- Python 3.9+
-- Una clave de API de Google Gemini
-
-### 1. Clonar el Repositorio
+Desde la raíz del proyecto, ejecuta:
 
 ```bash
-git clone <URL_DEL_REPOSITORIO>
-cd <NOMBRE_DEL_REPOSITORIO>
+docker compose -f compose.backend.yml up -d
 ```
 
-### 2. Instalar Dependencias
+Esto levantará MongoDB y el backend en contenedores.
+
+### 2. Ejecuta el servicio de data en local
+
+En otra terminal:
 
 ```bash
+cd data
 pip install -r requirements.txt
+GEMINI_API_KEY=tu_clave uvicorn chat_analyzer_api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+La API estará disponible en [http://localhost:8000/docs](http://localhost:8000/docs) y el backend levantado por Compose podrá conectarse a este servicio.
+
+## ⚙️ Variables de entorno
+
+- `GEMINI_API_KEY`: Clave de API de Google Gemini
+
+## 📝 Notas
+
+- Puedes personalizar el archivo Compose para tu flujo de trabajo.
+- Si quieres levantar todo el stack en contenedores, usa `compose.full.yml`.
