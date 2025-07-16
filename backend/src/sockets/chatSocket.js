@@ -1,6 +1,7 @@
 import axios from "axios";
 import { ChatRoom } from "../models/chatRoomModel.js";
 import { Message } from "../models/messageModel.js";
+import { processMetrics } from "../services/metricsServices.js";
 
 export default async function registerChatSocket(io, socket) {
   socket.on("joinRoom", async ({ roomId }) => {
