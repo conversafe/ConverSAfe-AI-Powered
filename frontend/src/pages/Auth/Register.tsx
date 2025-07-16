@@ -6,7 +6,7 @@ import Dropdown from "../../components/Dropdown";
 import { FiUser, FiMail, FiLock } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
-import { registrarUsuario } from "@/services/auth";
+import { registrarUsuario, loginUsuario } from "@/services/auth";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -69,14 +69,16 @@ const Register = () => {
     if (!valid) return;
 
     try {
-      const data = await registrarUsuario(formData as any);
+      await registrarUsuario(formData as any);
+
+      const loginData = await loginUsuario(formData.email, formData.password);
 
       localStorage.setItem(
         "auth",
-        JSON.stringify({ token: data.token, user: data.user })
+        JSON.stringify({ token: loginData.token, user: loginData.user })
       );
 
-      if (data.user.role === "admin") {
+      if (loginData.user.role === "admin") {
         navigate("/admin/inicio");
       } else {
         navigate("/user/inicio");
