@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import ParticipantesPanel from "../../components/chat/SidebarParticipantes";
 import ChatPanel from "../../components/chat/ChatMensajes";
@@ -8,12 +8,24 @@ import { Users, Sparkles } from "lucide-react";
 
 import { useParams } from "react-router-dom";
 import { useChatroomData } from "../../hooks/useChatroomData";
+import { agregarParticipante } from "@/services/chatSimulado";
 
 const ChatroomAdmin = () => {
   const [verParticipantes, setVerParticipantes] = useState(false);
   const [verIA, setVerIA] = useState(false);
   const { id } = useParams();
   const { room } = useChatroomData(id!);
+
+  useEffect(() => {
+    const auth = JSON.parse(localStorage.getItem("auth") || "null");
+    if (!id || !auth?.user) return;
+
+    agregarParticipante(id, {
+      nombre: auth.user.name,
+      rol: auth.user.role === "admin" ? "Administrador" : "Usuario",
+      imagen: auth.user.role === "admin" ? "/admin.png" : "/usuario1.png",
+    });
+  }, [id]);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
