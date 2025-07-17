@@ -22,7 +22,7 @@ const ChatMensajes = () => {
   const { id: roomId } = useParams(); // 👉 roomId dinámico desde la URL
   const user = JSON.parse(localStorage.getItem("auth") || "{}")?.user;
   const { socket } = useSocket();
-  const { messages: initialMessages, room } = useChatroomData(roomId || "");
+  const { messages: initialMessages } = useChatroomData(roomId || "");
 
   useEffect(() => {
     setMensajes(initialMessages as Mensaje[]);
@@ -53,9 +53,10 @@ const ChatMensajes = () => {
     socket.emit("joinRoom", { roomId });
 
     const handler = (msg: any) => {
-      const esAdmin = msg.sender._id === room?.adminId;
+      // Agregar el mensaje recibido al estado
+      const esAdmin = msg.sender && user && msg.sender._id === user._id;
       const nuevo: Mensaje = {
-        autor: msg.sender.name,
+        autor: msg.sender?.name || "Desconocido",
         rol: esAdmin ? "Administrador" : "Usuario",
         contenido: msg.content,
         hora: new Date(msg.createdAt).toLocaleTimeString([], {
@@ -68,7 +69,7 @@ const ChatMensajes = () => {
     };
 
     socket.on("newMessage", handler);
-    socket.on("chatError", msg => console.warn(msg));
+    socket.on("chatError", console.warn);
 
     return () => {
       socket.off("newMessage", handler);

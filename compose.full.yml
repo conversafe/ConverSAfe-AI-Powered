@@ -49,13 +49,13 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: http://backend:3000
-        VITE_SOCKET_URL: http://backend:3000
+        VITE_API_URL: http://localhost:3000
+        VITE_SOCKET_URL: http://localhost:3000
     container_name: frontend
     restart: always
     environment:
-      - VITE_API_URL=http://backend:3000
-      - VITE_SOCKET_URL=http://backend:3000
+      - VITE_API_URL=http://localhost:3000
+      - VITE_SOCKET_URL=http://localhost:3000
     ports:
       - "5173:5173"
     depends_on:
