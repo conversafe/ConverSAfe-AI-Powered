@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "7a8b9c2d-4e5f-6789-abc1-def234567890",
-    "name": "🧠 ConverSafe Chat Analyzer API | Análisis de Conversaciones con IA",
+    "name": "ConverSafe Chat Analyzer API | Análisis de Conversaciones con IA",
     "description": "Colección para probar el servicio de análisis de conversaciones que utiliza FastAPI y Google Gemini AI para extraer insights de chats de equipos de desarrollo.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "613062"
