@@ -11,6 +11,7 @@ interface Usuario {
 interface Mensaje {
   contenido: string;
   autor: string;
+  autorId: string;
   hora: string;
   imagen?: string;
   rol: "Administrador" | "Usuario";
@@ -22,6 +23,8 @@ interface ChatroomResponse {
   creador: string;
   creadorEmail: string;
   adminId: string;
+  messages: Mensaje[];
+  participants: Usuario[];
 }
 
 export const useChatroomData = (roomId: string) => {
@@ -39,31 +42,34 @@ export const useChatroomData = (roomId: string) => {
         const data = await apiClient(`/chatrooms/${roomId}`, { auth: true });
 
         setRoom({
-          id: data._id,
+          id: data.id,
           name: data.name,
-          creador: data.admin.name,
-          creadorEmail: data.admin.email,
-          adminId: data.admin._id,
+          creador: data.creador,
+          creadorEmail: data.creadorEmail,
+          adminId: data.adminId,
+          messages: data.messages,
+          participants: data.participants,
         });
 
         const allParticipants: Usuario[] = data.participants.map((p: any) => ({
           name: p.name,
           email: p.email,
-          role: p._id === data.admin._id ? "admin" : "user",
-          avatar: p._id === data.admin._id ? "/admin.png" : "/usuario1.png",
+          role: p.id === data.adminId ? "admin" : "user",
+          avatar: p.id === data.adminId ? "/admin.png" : "/usuario1.png",
         }));
 
         setParticipants(allParticipants);
 
         const msgs: Mensaje[] = data.messages.map((m: any) => ({
-          contenido: m.content,
-          autor: m.sender.name,
-          hora: new Date(m.createdAt).toLocaleTimeString([], {
+          contenido: m.contenido,
+          autor: m.autor,
+          autorId: m.autorId,
+          hora: new Date(m.hora).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           }),
-          imagen: m.sender._id === data.admin._id ? "/admin.png" : "/usuario1.png",
-          rol: m.sender._id === data.admin._id ? "Administrador" : "Usuario",
+          imagen: m.autorId === data.adminId ? "/admin.png" : "/usuario1.png",
+          rol: m.autorId === data.adminId ? "Administrador" : "Usuario",
         }));
 
         setMessages(msgs);

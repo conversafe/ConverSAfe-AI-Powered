@@ -2,6 +2,7 @@ import { useState } from "react";
 import Header from "../../components/Header";
 import ParticipantesPanel from "../../components/chat/SidebarParticipantes";
 import ChatPanel from "../../components/chat/ChatMensajes";
+import type { Mensaje } from "../../components/chat/ChatMensajes";
 import Boton from "../../components/Boton";
 import { Users } from "lucide-react";
 
@@ -45,7 +46,7 @@ const ChatroomUsuario = () => {
           </div>
 
           {/* Chat */}
-          <ChatPanel />
+          <ChatPanel messages={room?.messages as Mensaje[] || []} />
         </div>
       </div>
 

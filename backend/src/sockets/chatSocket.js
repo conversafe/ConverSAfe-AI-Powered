@@ -39,10 +39,20 @@ export default async function registerChatSocket(io, socket) {
 
     const populatedMsg = await Message.findById(message._id).populate(
       "sender",
-      "name email"
+      "name email role"
     );
 
-    io.to(roomId).emit("newMessage", populatedMsg);
+    // Map to frontend format
+    const mappedMsg = {
+      contenido: populatedMsg.content,
+      autor: populatedMsg.sender?.name || "",
+      autorId: populatedMsg.sender?._id?.toString() || "",
+      hora: populatedMsg.createdAt ? new Date(populatedMsg.createdAt).toLocaleString() : "",
+      imagen: undefined, // Puedes ajustar si agregas avatar
+      rol: populatedMsg.sender?.role === "admin" ? "Administrador" : "Usuario",
+    };
+
+    io.to(roomId).emit("newMessage", mappedMsg);
 
     //Enviar a la IA y guardar la métrica
     try {

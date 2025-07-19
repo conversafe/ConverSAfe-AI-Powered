@@ -25,15 +25,38 @@ export const getRoomById = async (roomId) => {
   const messages = await Message.find({ chatRoom: roomId })
     .sort({ createdAt: -1 })
     .limit(HISTORY_N_MSG)
-    .populate("sender", "name email")
+    .populate("sender", "name email role")
     .lean();
 
-  room.messages = messages.reverse();
-  return room;
+  // Map messages to frontend format
+  const mappedMessages = messages.reverse().map((msg) => ({
+    contenido: msg.content,
+    autor: msg.sender?.name || "",
+    autorId: msg.sender?._id?.toString() || "",
+    hora: msg.createdAt ? new Date(msg.createdAt).toLocaleString() : "",
+    imagen: undefined, // No image field in User or Message
+    rol: msg.sender?.role === "admin" ? "Administrador" : "Usuario",
+  }));
+
+  // Compose response in frontend format
+  return {
+    id: room._id.toString(),
+    name: room.name,
+    creador: room.admin?.name || "",
+    creadorEmail: room.admin?.email || "",
+    adminId: room.admin?._id?.toString() || "",
+    messages: mappedMessages,
+    participants: room.participants.map((p) => ({
+      id: p._id?.toString() || p.toString(),
+      name: p.name || "",
+      email: p.email || "",
+      rol: p.role === "admin" ? "Administrador" : "Usuario",
+    })),
+  };
 };
 
 export const joinRoomByCode = async (accessCode, user) => {
-  const room = await ChatRoom.findOne({ accessCode });
+  const room = await ChatRoom.findById(accessCode);
   if (!room) return null;
 
   const alreadyInRoom = room.participants.includes(user._id);

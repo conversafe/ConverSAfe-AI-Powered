@@ -3,19 +3,34 @@ import Boton from "../../components/Boton";
 import Input from "../../components/Input";
 import { useState } from "react";
 import { FiHash } from "react-icons/fi";
+import { apiClient } from "@/utils/apiClient";
 
 const UsuarioUnirseCanal = () => {
   const navigate = useNavigate();
   const [codigo, setCodigo] = useState("");
+  const [error, setError] = useState("");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#EFF6FF] p-6 text-[#F9FAFB]">
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
+          setError("");
           if (codigo.trim()) {
-            console.log("Usuario se une al canal con código:", codigo);
-            navigate(`/user/chatroom/${codigo}`);
+            try {
+              const res = await apiClient("/chatrooms/join", {
+                method: "POST",
+                body: { accessCode: codigo },
+                auth: true,
+              });
+              if (res && res.roomId) {
+                navigate(`/user/chatroom/${res.roomId}`);
+              } else {
+                setError("No se pudo unir a la sala. Verifica el código.");
+              }
+            } catch (err) {
+              setError("No se pudo unir a la sala. Verifica el código.");
+            }
           }
         }}
         className="w-full max-w-[1020px] h-[526px] bg-[#F9FAFB] border border-[#103A86] rounded-[16px]
@@ -40,6 +55,10 @@ const UsuarioUnirseCanal = () => {
             required
             inputName="codigo"
           />
+
+          {error && (
+            <div className="text-red-600 font-semibold text-center">{error}</div>
+          )}
 
           <Boton
             texto="Unirse"

@@ -53,7 +53,7 @@ const ChatroomAdmin = () => {
           </div>
 
           {/* Chat */}
-          <ChatPanel />
+          <ChatPanel messages={room?.messages || []} />
         </div>
 
         {/* Asistente IA - solo md+ */}

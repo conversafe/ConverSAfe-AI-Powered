@@ -6,15 +6,20 @@ import clsx from "clsx";
 import { useSocket } from "@/hooks/useSocket";
 import { useChatroomData } from "@/hooks/useChatroomData";
 
-interface Mensaje {
+export interface Mensaje {
   autor: string;
+  autorId: string;
   rol: "Administrador" | "Usuario" | "IA";
   contenido: string;
   hora: string;
   imagen?: string;
 }
 
-const ChatMensajes = () => {
+interface ChatMensajesProps {
+  messages: Mensaje[];
+}
+
+const ChatMensajes = ({ messages: initialMessages }: ChatMensajesProps) => {
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
   const chatRef = useRef<HTMLDivElement | null>(null);
@@ -22,7 +27,6 @@ const ChatMensajes = () => {
   const { id: roomId } = useParams(); // 👉 roomId dinámico desde la URL
   const user = JSON.parse(localStorage.getItem("auth") || "{}")?.user;
   const { socket } = useSocket();
-  const { messages: initialMessages } = useChatroomData(roomId || "");
 
   useEffect(() => {
     setMensajes(initialMessages as Mensaje[]);
@@ -53,19 +57,17 @@ const ChatMensajes = () => {
     socket.emit("joinRoom", { roomId });
 
     const handler = (msg: any) => {
-      // Agregar el mensaje recibido al estado
-      const esAdmin = msg.sender && user && msg.sender._id === user._id;
-      const nuevo: Mensaje = {
-        autor: msg.sender?.name || "Desconocido",
-        rol: esAdmin ? "Administrador" : "Usuario",
-        contenido: msg.content,
-        hora: new Date(msg.createdAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        imagen: esAdmin ? "/admin.png" : "/usuario1.png",
-      };
-      setMensajes(prev => [...prev, nuevo]);
+      setMensajes(prev => [
+        ...prev,
+        {
+          autor: msg.autor,
+          contenido: msg.contenido,
+          hora: msg.hora,
+          rol: msg.rol,
+          imagen: msg.rol === "Administrador" ? "/admin.png" : "/usuario1.png",
+          autorId: msg.autorId,
+        },
+      ]);
     };
 
     socket.on("newMessage", handler);
