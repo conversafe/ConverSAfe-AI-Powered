@@ -2,10 +2,11 @@ import { useParams } from "react-router-dom";
 import ParticipanteItem from "./ParticipanteItem";
 import { Users } from "lucide-react";
 import { useChatroomData } from "@/hooks/useChatroomData";
+import type { UseChatroomDataReturn } from "@/hooks/useChatroomData";
 
 const SidebarParticipantes = () => {
   const { id: roomId } = useParams();
-  const { participants } = useChatroomData(roomId || "") as any;
+  const { participants } = useChatroomData(roomId || "") as UseChatroomDataReturn;
 
 
   return (
@@ -21,9 +22,9 @@ const SidebarParticipantes = () => {
       <div className="border-b border-gray-300 mb-2" />
 
       <div className="flex flex-col gap-3 overflow-y-auto max-h-[calc(100vh-150px)] pr-2">
-        {participants.map((p: any, i: number) => (
+        {participants.map((p) => (
           <ParticipanteItem
-            key={i}
+            key={p.id}
             nombre={p.nombre}
             rol={p.rol}
             imagen={p.imagen}

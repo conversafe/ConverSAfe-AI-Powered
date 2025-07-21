@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/utils/apiClient";
 
 interface Usuario {
+  id: string;
   name: string;
   email: string;
   avatar?: string;
@@ -25,6 +26,21 @@ interface ChatroomResponse {
   adminId: string;
   messages: Mensaje[];
   participants: Usuario[];
+}
+
+export interface SidebarParticipant {
+  id: string;
+  nombre: string;
+  rol: string;
+  imagen?: string;
+}
+
+export interface UseChatroomDataReturn {
+  room: ChatroomResponse | null;
+  participants: SidebarParticipant[];
+  messages: Mensaje[];
+  loading: boolean;
+  error: string | null;
 }
 
 export const useChatroomData = (roomId: string) => {
@@ -52,6 +68,7 @@ export const useChatroomData = (roomId: string) => {
         });
 
         const allParticipants: Usuario[] = data.participants.map((p: any) => ({
+          id: p.id,
           name: p.name,
           email: p.email,
           role: p.id === data.adminId ? "admin" : "user",
@@ -87,6 +104,7 @@ export const useChatroomData = (roomId: string) => {
   return {
     room,
     participants: participants.map((p) => ({
+      id: p.id,
       nombre: p.name,
       rol: p.role === "admin" ? "Administrador" : "Usuario",
       imagen: p.avatar,

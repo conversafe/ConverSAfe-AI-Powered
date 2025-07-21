@@ -7,13 +7,14 @@ import { FiUser, FiMail, FiLock } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
 import { registrarUsuario, loginUsuario } from "@/services/auth";
+import type { RegistroData } from "@/services/auth";
 
 const Register = () => {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegistroData>({
     name: "",
-    role: "",
+    role: "" as "admin" | "user",
     email: "",
     password: "",
   });
@@ -69,7 +70,7 @@ const Register = () => {
     if (!valid) return;
 
     try {
-      await registrarUsuario(formData as any);
+      await registrarUsuario(formData);
 
       const loginData = await loginUsuario(formData.email, formData.password);
 

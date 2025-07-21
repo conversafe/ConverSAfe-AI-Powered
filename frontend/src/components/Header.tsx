@@ -23,9 +23,6 @@ const Header = ({ isAuthenticated, userImage }: HeaderProps) => {
   const handleSalirSala = () => {
     const destino = user?.role === "admin" ? "/admin/inicio" : "/usuario/inicio";
     navigate(destino);
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
   };
 
 
