@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-// import axios from "axios"; // 👉 descomenta cuando conectes al backend
+import { apiClient } from "@/utils/apiClient";
 
 interface Usuario {
+  id: string;
   name: string;
   email: string;
   avatar?: string;
@@ -11,6 +12,7 @@ interface Usuario {
 interface Mensaje {
   contenido: string;
   autor: string;
+  autorId: string;
   hora: string;
   imagen?: string;
   rol: "Administrador" | "Usuario";
@@ -21,6 +23,24 @@ interface ChatroomResponse {
   name: string;
   creador: string;
   creadorEmail: string;
+  adminId: string;
+  messages: Mensaje[];
+  participants: Usuario[];
+}
+
+export interface SidebarParticipant {
+  id: string;
+  nombre: string;
+  rol: string;
+  imagen?: string;
+}
+
+export interface UseChatroomDataReturn {
+  room: ChatroomResponse | null;
+  participants: SidebarParticipant[];
+  messages: Mensaje[];
+  loading: boolean;
+  error: string | null;
 }
 
 export const useChatroomData = (roomId: string) => {
@@ -35,49 +55,41 @@ export const useChatroomData = (roomId: string) => {
       try {
         setLoading(true);
 
-        // ✅ Simulación con localStorage
-        const canales: ChatroomResponse[] = JSON.parse(localStorage.getItem("canales") || "[]");
-        const canal = canales.find((c) => c.id === roomId);
-        if (!canal) {
-          setError("Canal no encontrado.");
-          return;
-        }
-        setRoom(canal);
+        const data = await apiClient(`/chatrooms/${roomId}`, { auth: true });
 
-        // Participantes simulados
-        const auth = JSON.parse(localStorage.getItem("auth") || "{}");
-        const user: Usuario = {
-          name: auth?.user?.name,
-          email: auth?.user?.email,
-          avatar: auth?.user?.role === "admin" ? "/admin.png" : "/usuario1.png",
-          role: auth?.user?.role,
-        };
-
-        setParticipants([
-          {
-            ...user,
-            name: canal.creador,
-            avatar: "/admin.png",
-            role: "admin",
-          },
-        ]);
-
-        // Mensajes simulados
-        const mensajesGuardados = JSON.parse(localStorage.getItem(`mensajes-${roomId}`) || "[]");
-        setMessages(mensajesGuardados);
-
-        // --- BACKEND REAL ---
-        /*
-        const token = localStorage.getItem("token");
-        const { data } = await axios.get<ChatroomResponse>(`https://tu-api.com/chatrooms/${roomId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        setRoom({
+          id: data.id,
+          name: data.name,
+          creador: data.creador,
+          creadorEmail: data.creadorEmail,
+          adminId: data.adminId,
+          messages: data.messages,
+          participants: data.participants,
         });
-        setRoom(data);
 
-        // Aquí iría la lógica para setParticipants y setMessages desde la API
-        */
+        const allParticipants: Usuario[] = data.participants.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          email: p.email,
+          role: p.id === data.adminId ? "admin" : "user",
+          avatar: p.id === data.adminId ? "/admin.png" : "/usuario1.png",
+        }));
+
+        setParticipants(allParticipants);
+
+        const msgs: Mensaje[] = data.messages.map((m: any) => ({
+          contenido: m.contenido,
+          autor: m.autor,
+          autorId: m.autorId,
+          hora: new Date(m.hora).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          imagen: m.autorId === data.adminId ? "/admin.png" : "/usuario1.png",
+          rol: m.autorId === data.adminId ? "Administrador" : "Usuario",
+        }));
+
+        setMessages(msgs);
 
       } catch (e) {
         setError("Error al obtener la sala.");
@@ -92,6 +104,7 @@ export const useChatroomData = (roomId: string) => {
   return {
     room,
     participants: participants.map((p) => ({
+      id: p.id,
       nombre: p.name,
       rol: p.role === "admin" ? "Administrador" : "Usuario",
       imagen: p.avatar,

@@ -53,7 +53,7 @@ const Dropdown = ({
         >
           <option value="" hidden>Rol</option>
           <option value="admin">Administrador</option>
-          <option value="usuario">Usuario</option>
+          <option value="user">Usuario</option>
         </select>
 
         {/* Icono derecho */}

@@ -3,45 +3,43 @@ import { useParams } from "react-router-dom";
 import { FiSend } from "react-icons/fi";
 import { BotMessageSquare } from "lucide-react";
 import clsx from "clsx";
-// import { useSocket } from "../../hooks/useSocket"; // 👉 Descomentar cuando se use backend
-import {
-  getMensajes,
-  enviarMensaje,
-  suscribirse,
-  cancelarSuscripcion,
-} from "../../services/chatSimulado"; // ✅ Simulación local
+import { useSocket } from "@/hooks/useSocket";
+import { useChatroomData } from "@/hooks/useChatroomData";
 
-interface Mensaje {
+export interface Mensaje {
   autor: string;
+  autorId: string;
   rol: "Administrador" | "Usuario" | "IA";
   contenido: string;
   hora: string;
   imagen?: string;
 }
 
-const ChatMensajes = () => {
+interface ChatMensajesProps {
+  messages: Mensaje[];
+}
+
+const ChatMensajes = ({ messages: initialMessages }: ChatMensajesProps) => {
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
   const chatRef = useRef<HTMLDivElement | null>(null);
 
   const { id: roomId } = useParams(); // 👉 roomId dinámico desde la URL
   const user = JSON.parse(localStorage.getItem("auth") || "{}")?.user;
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    setMensajes(initialMessages as Mensaje[]);
+  }, [initialMessages]);
 
   const handleEnviar = () => {
-    if (!nuevoMensaje.trim() || !roomId) return;
+    if (!nuevoMensaje.trim() || !roomId || !socket) return;
 
-    const nuevo: Mensaje = {
-      autor: user?.name || "Tú",
-      rol: user?.role === "admin" ? "Administrador" : "Usuario",
-      contenido: nuevoMensaje,
-      hora: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      imagen: user?.role === "admin" ? "/admin.png" : "/usuario1.png",
-    };
+    socket.emit("sendMessage", {
+      roomId,
+      content: nuevoMensaje,
+    });
 
-    enviarMensaje(roomId, nuevo);
     setNuevoMensaje("");
   };
 
@@ -53,17 +51,33 @@ const ChatMensajes = () => {
     });
   }, [mensajes]);
 
-  // Simulación con localStorage
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !socket) return;
 
-    setMensajes(getMensajes(roomId));
+    socket.emit("joinRoom", { roomId });
 
-    const actualizar = (nuevos: Mensaje[]) => setMensajes(nuevos);
-    suscribirse(roomId, actualizar);
+    const handler = (msg: any) => {
+      setMensajes(prev => [
+        ...prev,
+        {
+          autor: msg.autor,
+          contenido: msg.contenido,
+          hora: msg.hora,
+          rol: msg.rol,
+          imagen: msg.rol === "Administrador" ? "/admin.png" : "/usuario1.png",
+          autorId: msg.autorId,
+        },
+      ]);
+    };
 
-    return () => cancelarSuscripcion(roomId, actualizar); 
-  }, [roomId]);
+    socket.on("newMessage", handler);
+    socket.on("chatError", console.warn);
+
+    return () => {
+      socket.off("newMessage", handler);
+      socket.off("chatError");
+    };
+  }, [socket, roomId]);
 
   return (
     <div className="h-full flex flex-col bg-[#E5E7EB] p-4 rounded-none">
